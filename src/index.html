@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <title>智视频会议测试</title>
+  <base href="/">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <!-- Roboto字体加载，带备用方案 -->
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500&display=swap" rel="stylesheet" onerror="this.onerror=null;this.href='';">
+  <!-- Material Icons字体加载，带备用方案 -->
+  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet" onerror="this.onerror=null;this.href='';">
+  
+  <!-- 字体加载失败时的备用CSS -->
+  <style>
+    /* 当Google字体加载失败时的备用字体 */
+    .mat-typography {
+      font-family: 'Roboto', 'Microsoft YaHei', '微软雅黑', 'SimSun', '宋体', sans-serif;
+    }
+    
+    /* Material Icons备用方案 */
+    .material-icons {
+      font-family: 'Material Icons', 'Material Icons Fallback', sans-serif;
+      font-weight: normal;
+      font-style: normal;
+      font-size: 24px;
+      line-height: 1;
+      letter-spacing: normal;
+      text-transform: none;
+      display: inline-block;
+      white-space: nowrap;
+      word-wrap: normal;
+      direction: ltr;
+      -webkit-font-feature-settings: 'liga';
+      -webkit-font-smoothing: antialiased;
+    }
+    
+    /* 当Material Icons加载失败时显示文字 */
+    .mat-icon {
+      font-family: 'Material Icons', 'Material Icons Fallback', sans-serif;
+    }
+    
+    /* 字体加载失败时的图标备用显示 */
+    @supports not (font-family: 'Material Icons') {
+      .mat-icon::before {
+        content: '●';
+      }
+    }
+  </style>
+</head>
+<body class="mat-typography">
+  <app-root></app-root>
+</body>
+</html>
