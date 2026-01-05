@@ -9,25 +9,53 @@ import {
 } from '../models/recording.models';
 import { environment } from '../../../environments/environment';
 
+interface RecordingState {
+  isRecording: boolean;
+  roomName: string | null;
+  startTime: Date | null;
+  recordingId: string | null;
+  userId: string | null;
+  recordingName: string | null;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class RecordingService {
   private readonly apiUrl = environment.recordServiceUrl || 'http://localhost:8083/api/recordings';
   
-  private recordingStateSubject = new BehaviorSubject<{
-    isRecording: boolean;
-    roomName: string | null;
-    startTime: Date | null;
-  }>({
+  private recordingStateSubject = new BehaviorSubject<RecordingState>({
     isRecording: false,
     roomName: null,
-    startTime: null
+    startTime: null,
+    recordingId: null,
+    userId: null,
+    recordingName: null
   });
   
   public recordingState$ = this.recordingStateSubject.asObservable();
 
   constructor(private http: HttpClient) {}
+
+  /**
+   * 提取后端返回的录制会话ID，兼容多种响应结构
+   */
+  private resolveRecordingId(response: any, fallback?: string | null): string | null {
+    if (!response) {
+      return fallback || null;
+    }
+
+    return (
+      response.recordingId ??
+      response.id ??
+      response.egressId ??
+      response.recording?.id ??
+      response.data?.recordingId ??
+      response.data?.id ??
+      fallback ??
+      null
+    );
+  }
 
   /**
    * 根据房间名查询录制文件列表
@@ -155,20 +183,34 @@ export class RecordingService {
   /**
    * 开始录制 - 调用后端API开始录制
    */
-  startRecording(roomName: string): Observable<any> {
+  startRecording(
+    roomName: string,
+    userId?: string,
+    recordingName?: string,
+    format: string = 'mp4',
+    quality: string = 'high'
+  ): Observable<any> {
     const startRequest = {
       roomName: roomName,
+      userId: userId || '',
+      recordingName: recordingName || `${roomName}_${new Date().getTime()}`,
+      format: format,
+      quality: quality,
       startTime: new Date().toISOString()
     };
-    
+
     return new Observable(observer => {
       this.http.post(`${this.apiUrl}/start`, startRequest).subscribe({
         next: (response) => {
+          const recordingId = this.resolveRecordingId(response, startRequest.recordingName);
           // 更新本地状态
           this.recordingStateSubject.next({
             isRecording: true,
             roomName,
-            startTime: new Date()
+            startTime: new Date(),
+            recordingId,
+            userId: startRequest.userId || null,
+            recordingName: startRequest.recordingName
           });
           observer.next(response);
           observer.complete();
@@ -192,8 +234,25 @@ export class RecordingService {
       });
     }
 
+    const recordingId = currentState.recordingId || currentState.recordingName;
+    const userId = currentState.userId;
+
+    if (!recordingId) {
+      return new Observable(observer => {
+        observer.error('无法确定当前录制会话ID');
+      });
+    }
+
+    if (!userId) {
+      return new Observable(observer => {
+        observer.error('无法确定当前用户，无法停止录制');
+      });
+    }
+
     const stopRequest = {
       roomName: currentState.roomName,
+      recordingId,
+      userId,
       endTime: new Date().toISOString()
     };
     
@@ -204,7 +263,10 @@ export class RecordingService {
           this.recordingStateSubject.next({
             isRecording: false,
             roomName: null,
-            startTime: null
+            startTime: null,
+            recordingId: null,
+            userId: null,
+            recordingName: null
           });
           observer.next(response);
           observer.complete();
@@ -224,14 +286,17 @@ export class RecordingService {
     this.recordingStateSubject.next({
       isRecording: false,
       roomName: null,
-      startTime: null
+      startTime: null,
+      recordingId: null,
+      userId: null,
+      recordingName: null
     });
   }
 
   /**
    * 获取当前录制状态
    */
-  getRecordingState() {
+  getRecordingState(): RecordingState {
     return this.recordingStateSubject.value;
   }
 

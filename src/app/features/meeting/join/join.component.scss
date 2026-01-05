@@ -1,0 +1,32 @@
+.join-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.join-content {
+  text-align: center;
+  background: white;
+  padding: 2rem;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  max-width: 400px;
+  width: 90%;
+}
+
+h2 {
+  margin: 1rem 0 0.5rem 0;
+  color: #333;
+  font-weight: 500;
+}
+
+p {
+  color: #666;
+  margin: 0;
+}
+
+mat-spinner {
+  margin: 0 auto 1rem auto;
+}

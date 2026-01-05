@@ -1,0 +1,267 @@
+.responsive-test-container {
+  min-height: 100vh;
+  background: #f5f5f5;
+  padding-bottom: 20px;
+}
+
+.test-toolbar {
+  background: #1976d2;
+  color: white;
+  margin-bottom: 20px;
+}
+
+.toolbar-spacer {
+  flex: 1;
+}
+
+.current-resolution {
+  font-family: 'Courier New', monospace;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.resolution-info {
+  max-width: 1200px;
+  margin: 0 auto 20px;
+  padding: 0 16px;
+}
+
+.info-card {
+  margin-bottom: 20px;
+}
+
+.resolution-details {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 16px;
+}
+
+.detail-item {
+  padding: 8px 0;
+  border-bottom: 1px solid #eee;
+}
+
+.test-preview {
+  max-width: 1200px;
+  margin: 0 auto 20px;
+  padding: 0 16px;
+}
+
+.preview-card {
+  margin-bottom: 20px;
+}
+
+/* 模拟会议界面样式 */
+.mock-meeting-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.8);
+  color: white;
+  padding: 12px 16px;
+  border-radius: 8px;
+  margin-bottom: 16px;
+}
+
+.mock-meeting-info h3 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.mock-participant-count {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.mock-toolbar-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.mock-video-grid {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 16px;
+  min-height: 300px;
+}
+
+.mock-video-container {
+  position: relative;
+  background: #1a1a1a;
+  border-radius: 8px;
+  overflow: hidden;
+  aspect-ratio: 16/9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.mock-video-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  color: white;
+  text-align: center;
+}
+
+.mock-video-placeholder mat-icon {
+  font-size: 48px;
+  width: 48px;
+  height: 48px;
+  margin-bottom: 8px;
+}
+
+.mock-video-overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(transparent, rgba(0,0,0,0.8));
+  color: white;
+  padding: 8px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.mock-participant-name {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.mock-controls mat-icon {
+  font-size: 16px;
+  width: 16px;
+  height: 16px;
+}
+
+.mock-controls mat-icon.muted {
+  color: #f44336;
+}
+
+.mock-meeting-controls {
+  display: flex;
+  justify-content: center;
+  margin-top: 16px;
+}
+
+.mock-controls-group {
+  display: flex;
+  gap: 12px;
+  background: rgba(0, 0, 0, 0.7);
+  padding: 12px 24px;
+  border-radius: 40px;
+}
+
+.mock-controls-group button {
+  width: 48px;
+  height: 48px;
+}
+
+.test-controls {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 16px;
+}
+
+.controls-card {
+  margin-bottom: 20px;
+}
+
+.resolution-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+}
+
+.resolution-buttons button {
+  min-width: 160px;
+  padding: 12px 16px;
+}
+
+.resolution-buttons button.active {
+  background: #4caf50 !important;
+  color: white;
+}
+
+.resolution-buttons button mat-icon {
+  margin-right: 8px;
+}
+
+/* 不同分辨率的视频网格样式 */
+.video-grid-4k {
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+}
+
+.video-grid-2k {
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.video-grid-1k {
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+.video-grid-standard {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+/* 分辨率类型芯片样式 */
+.resolution-4k {
+  background: #4caf50 !important;
+  color: white !important;
+}
+
+.resolution-2k {
+  background: #2196f3 !important;
+  color: white !important;
+}
+
+.resolution-1k {
+  background: #ff9800 !important;
+  color: white !important;
+}
+
+.resolution-standard {
+  background: #9c27b0 !important;
+  color: white !important;
+}
+
+.resolution-mobile {
+  background: #f44336 !important;
+  color: white !important;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .resolution-details {
+    grid-template-columns: 1fr;
+  }
+
+  .resolution-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .resolution-buttons button {
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .mock-video-placeholder mat-icon {
+    font-size: 32px;
+    width: 32px;
+    height: 32px;
+  }
+
+  .mock-controls-group {
+    padding: 8px 16px;
+    gap: 8px;
+  }
+
+  .mock-controls-group button {
+    width: 40px;
+    height: 40px;
+  }
+}

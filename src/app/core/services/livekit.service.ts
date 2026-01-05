@@ -118,7 +118,7 @@ export class LiveKitService {
       this.room = new Room(options);
 
       this.setupRoomEventListeners();
-
+      console.log(serverUrl, 'serverUrl');
       // 连接到房间
       await this.room.connect(serverUrl, token);
 
@@ -196,27 +196,21 @@ export class LiveKitService {
         enabled = !this.localParticipant.isCameraEnabled;
       }
 
-      if (enabled) {
-        // 启用摄像头
-        // 创建一个本地视频轨道，并设置分辨率和面对模式
-        const videoTrack = await createLocalVideoTrack({
-          resolution: VideoPresets.h720.resolution,
-          facingMode: 'user'
-        });
-        // // 发布新创建的视频轨道到房间
-        // await this.localParticipant.publishTrack(videoTrack);
-        //
-        // // 手动更新本地轨道的状态，以便其他地方可以访问
-        // const currentTracks = this.localTracksSubject.value;
-        // this.localTracksSubject.next({ ...currentTracks, video: videoTrack });
-        await this.localParticipant.publishTrack(videoTrack);
-      } else {
-        // 禁用摄像头
-        // 使用 LiveKit SDK 方法禁用摄像头，这会自动取消发布并静音轨道
-        await this.localParticipant.setCameraEnabled(false);
+      // 使用 LiveKit SDK 的统一方法来启用/禁用摄像头
+      // setCameraEnabled 会自动处理轨道的创建、发布和取消发布
+      await this.localParticipant.setCameraEnabled(enabled);
 
-        // 手动更新本地轨道的状态
-        const currentTracks = this.localTracksSubject.value;
+      // 等待轨道准备就绪
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // 更新本地轨道状态
+      const currentTracks = this.localTracksSubject.value;
+      if (enabled) {
+        // 获取新创建的视频轨道
+        const videoPublication = this.localParticipant.getTrackPublication(Track.Source.Camera);
+        const videoTrack = videoPublication?.track as LocalVideoTrack;
+        this.localTracksSubject.next({ ...currentTracks, video: videoTrack });
+      } else {
         this.localTracksSubject.next({ ...currentTracks, video: undefined });
       }
 

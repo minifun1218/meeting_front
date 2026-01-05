@@ -1,0 +1,195 @@
+<div class="home-container full-height">
+  <!-- 顶部工具栏 -->
+  <mat-toolbar class="toolbar">
+    <span class="app-name">智慧课堂</span>
+
+    <div class="toolbar-spacer"></div>
+
+    <div class="toolbar-actions">
+      <button mat-button [routerLink]="['/recordings']">
+        <mat-icon>video_library</mat-icon>
+        <span>录制文件</span>
+      </button>
+
+      <button mat-icon-button [matMenuTriggerFor]="userMenu">
+        <mat-icon>account_circle</mat-icon>
+      </button>
+
+      <mat-menu #userMenu="matMenu">
+        <div class="user-info">
+          <div class="user-name">{{currentUser?.displayName}}</div>
+          <div class="user-role">{{getRoleDisplayName(currentUser?.role)}}</div>
+        </div>
+        <mat-divider></mat-divider>
+        <button mat-menu-item (click)="logout()">
+          <mat-icon>exit_to_app</mat-icon>
+          <span>退出登录</span>
+        </button>
+      </mat-menu>
+    </div>
+  </mat-toolbar>
+
+  <!-- 主要内容区域 -->
+  <div class="main-content">
+    <div class="container">
+      <!-- 欢迎区域 -->
+      <div class="welcome-section fade-in">
+        <h1 class="welcome-title">欢迎回来，<span class="highlight">{{currentUser?.displayName}}</span>!</h1>
+        <p class="welcome-subtitle">开始或加入一个视频会议，与团队实时协作</p>
+      </div>
+
+      <!-- 快速操作区域 -->
+      <div class="quick-actions">
+        <div class="action-cards">
+          <!-- 创建会议 -->
+          <mat-card class="action-card modern-card scale-in">
+            <mat-card-header>
+              
+              <mat-card-title>创建会议</mat-card-title>
+              <mat-card-subtitle>创建一个新的视频会议</mat-card-subtitle>
+            </mat-card-header>
+
+            <mat-card-content>
+              <form [formGroup]="createRoomForm" (ngSubmit)="createRoom()">
+                <mat-form-field class="full-width" appearance="outline">
+                  <mat-label>会议室名称</mat-label>
+                  <input matInput formControlName="roomName" placeholder="输入会议室名称">
+                  <mat-error *ngIf="createRoomForm.get('roomName')?.hasError('required')">
+                    会议室名称不能为空
+                  </mat-error>
+                </mat-form-field>
+
+                <mat-form-field class="full-width" appearance="outline">
+                  <mat-label>会议描述</mat-label>
+                  <textarea matInput formControlName="description"
+                            placeholder="输入会议描述（可选）" rows="3"></textarea>
+                </mat-form-field>
+              </form>
+            </mat-card-content>
+
+            <mat-card-actions>
+              <button mat-raised-button
+                      color="primary"
+                      class="action-button gradient-button ripple"
+                      (click)="createRoom()"
+                      [disabled]="createRoomForm.invalid || isCreatingRoom">
+                <mat-spinner *ngIf="isCreatingRoom" diameter="20" class="mr-1"></mat-spinner>
+                {{isCreatingRoom ? '创建中...' : '创建会议'}}
+              </button>
+            </mat-card-actions>
+          </mat-card>
+
+          <!-- 加入会议 -->
+          <mat-card class="action-card modern-card scale-in">
+            <mat-card-header>
+              
+              <mat-card-title>加入会议</mat-card-title>
+              <mat-card-subtitle>使用会议室名称或邀请码加入</mat-card-subtitle>
+            </mat-card-header>
+
+            <mat-card-content>
+              <form [formGroup]="joinRoomForm" (ngSubmit)="joinRoom()">
+                <mat-form-field class="full-width" appearance="outline">
+                  <mat-label>会议室名称</mat-label>
+                  <input matInput formControlName="roomName" placeholder="输入要加入的会议室名称">
+                  <mat-error *ngIf="joinRoomForm.get('roomName')?.hasError('required')">
+                    会议室名称不能为空
+                  </mat-error>
+                </mat-form-field>
+
+                <div class="divider-text">或</div>
+
+                <mat-form-field class="full-width" appearance="outline">
+                  <mat-label>邀请码</mat-label>
+                  <input matInput formControlName="inviteCode" placeholder="输入6位邀请码">
+                  <mat-error *ngIf="joinRoomForm.get('inviteCode')?.hasError('pattern')">
+                    邀请码格式不正确
+                  </mat-error>
+                </mat-form-field>
+              </form>
+            </mat-card-content>
+
+            <mat-card-actions>
+              <button mat-raised-button
+                      color="accent"
+                      class="action-button gradient-button ripple"
+                      (click)="joinRoom()"
+                      [disabled]="!canJoinRoom() || isJoiningRoom">
+                <mat-spinner *ngIf="isJoiningRoom" diameter="20" class="mr-1"></mat-spinner>
+                {{isJoiningRoom ? '加入中...' : '加入会议'}}
+              </button>
+            </mat-card-actions>
+          </mat-card>
+        </div>
+      </div>
+
+      <!-- 活跃的会议列表 -->
+      <div class="active-meetings-section slide-in">
+        <div class="section-header">
+          <h2 class="section-title">活跃的会议</h2>
+          <div class="section-badge">{{activeRooms.length}} 个进行中</div>
+        </div>
+
+        <div class="loading-container" *ngIf="isLoadingRooms">
+          <mat-spinner diameter="40"></mat-spinner>
+          <p>加载会议列表...</p>
+        </div>
+
+        <div class="meetings-grid" *ngIf="!isLoadingRooms && activeRooms.length > 0">
+          <mat-card *ngFor="let room of activeRooms" class="meeting-card modern-card elegant-shadow">
+            <mat-card-header>
+              
+              <mat-card-title>{{room.roomName}}</mat-card-title>
+              <mat-card-subtitle class="participant-count">
+                <mat-icon class="small-icon">people</mat-icon>
+                {{room.currentParticipants}}/{{room.maxParticipants}} 参与者
+              </mat-card-subtitle>
+            </mat-card-header>
+
+            <mat-card-content>
+              <p *ngIf="room.description" class="room-description">
+                {{room.description}}
+              </p>
+              <div class="room-meta">
+                <div class="meta-item">
+                  <mat-icon class="meta-icon">person_outline</mat-icon>
+                  <span>创建者: {{room.createdBy}}</span>
+                </div>
+                <div class="meta-item">
+                  <mat-icon class="meta-icon">schedule</mat-icon>
+                  <span>{{formatTime(room.createdAt)}}</span>
+                </div>
+              </div>
+            </mat-card-content>
+
+            <mat-card-actions>
+              <button mat-button
+                      color="primary"
+                      class="join-btn ripple"
+                      (click)="quickJoinRoom(room.roomName)">
+                <mat-icon>play_arrow</mat-icon>
+                快速加入
+              </button>
+
+              <button mat-button
+                      class="end-btn ripple"
+                      *ngIf="room.createdBy === currentUser?.id"
+                      (click)="endRoom(room.roomName)">
+                <mat-icon>stop</mat-icon>
+                结束会议
+              </button>
+            </mat-card-actions>
+          </mat-card>
+        </div>
+
+        <div class="empty-state" *ngIf="!isLoadingRooms && activeRooms.length === 0">
+          <div class="empty-icon-wrapper">
+            <mat-icon class="empty-icon">meeting_room</mat-icon>
+          </div>
+          <h3>暂无活跃的会议</h3>
+          <p>创建一个新的会议开始视频通话</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

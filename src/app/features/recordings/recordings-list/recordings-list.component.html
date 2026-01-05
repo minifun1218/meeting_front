@@ -1,0 +1,289 @@
+<div class="recordings-container full-height">
+  <!-- 顶部工具栏 -->
+  <mat-toolbar class="toolbar">
+    <div class="toolbar-content">
+      <div class="toolbar-title">
+        <button mat-icon-button [routerLink]="['/home']">
+          <mat-icon>arrow_back</mat-icon>
+        </button>
+        <mat-icon class="title-icon">video_library</mat-icon>
+        <span>录制文件管理</span>
+      </div>
+
+      <div class="toolbar-actions">
+        <button mat-icon-button
+                (click)="refreshRecordings()"
+                [disabled]="isLoading"
+                matTooltip="刷新">
+          <mat-icon>refresh</mat-icon>
+        </button>
+
+        <button mat-button [routerLink]="['/home']">
+          <mat-icon>home</mat-icon>
+          返回主页
+        </button>
+      </div>
+    </div>
+  </mat-toolbar>
+
+  <!-- 主要内容区域 -->
+  <div class="main-content">
+    <div class="container">
+      <!-- 搜索和筛选区域 -->
+      <mat-card class="filters-card">
+        <mat-card-content>
+          <form [formGroup]="searchForm" class="search-form">
+            <div class="search-row">
+              <mat-form-field class="search-field" appearance="outline">
+                <mat-label>搜索录制文件</mat-label>
+                <input matInput
+                       formControlName="searchText"
+                       placeholder="输入房间名称或文件名">
+                <mat-icon matSuffix>search</mat-icon>
+              </mat-form-field>
+
+              <mat-form-field class="filter-field" appearance="outline">
+                <mat-label>状态</mat-label>
+                <mat-select formControlName="status">
+                  <mat-option value="">全部状态</mat-option>
+                  <mat-option value="COMPLETED">已完成</mat-option>
+                  <mat-option value="PROCESSING">处理中</mat-option>
+                  <mat-option value="FAILED">失败</mat-option>
+                  <mat-option value="UPLOADING">上传中</mat-option>
+                </mat-select>
+              </mat-form-field>
+
+              <mat-form-field class="filter-field" appearance="outline">
+                <mat-label>开始日期</mat-label>
+                <input matInput
+                       [matDatepicker]="startPicker"
+                       formControlName="startDate">
+                <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+                <mat-datepicker #startPicker></mat-datepicker>
+              </mat-form-field>
+
+              <mat-form-field class="filter-field" appearance="outline">
+                <mat-label>结束日期</mat-label>
+                <input matInput
+                       [matDatepicker]="endPicker"
+                       formControlName="endDate">
+                <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+                <mat-datepicker #endPicker></mat-datepicker>
+              </mat-form-field>
+
+              <button mat-raised-button
+                      color="primary"
+                      (click)="applyFilters()"
+                      [disabled]="isLoading">
+                搜索
+              </button>
+
+              <button mat-button
+                      (click)="clearFilters()">
+                清空
+              </button>
+            </div>
+          </form>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- 统计信息 -->
+      <div class="stats-row" *ngIf="!isLoading">
+        <mat-card class="stat-card">
+          <mat-card-content>
+            <div class="stat-content">
+              <mat-icon class="stat-icon">video_library</mat-icon>
+              <div class="stat-info">
+                <div class="stat-value">{{totalRecordings}}</div>
+                <div class="stat-label">总录制文件</div>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="stat-card">
+          <mat-card-content>
+            <div class="stat-content">
+              <mat-icon class="stat-icon completed">check_circle</mat-icon>
+              <div class="stat-info">
+                <div class="stat-value">{{completedRecordings}}</div>
+                <div class="stat-label">已完成</div>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="stat-card">
+          <mat-card-content>
+            <div class="stat-content">
+              <mat-icon class="stat-icon processing">autorenew</mat-icon>
+              <div class="stat-info">
+                <div class="stat-value">{{processingRecordings}}</div>
+                <div class="stat-label">处理中</div>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+
+        <mat-card class="stat-card">
+          <mat-card-content>
+            <div class="stat-content">
+              <mat-icon class="stat-icon storage">storage</mat-icon>
+              <div class="stat-info">
+                <div class="stat-value">{{formatTotalSize(totalSize)}}</div>
+                <div class="stat-label">总大小</div>
+              </div>
+            </div>
+          </mat-card-content>
+        </mat-card>
+      </div>
+
+      <!-- 录制文件列表 -->
+      <div class="recordings-section">
+        <!-- 加载状态 -->
+        <div class="loading-container" *ngIf="isLoading">
+          <mat-spinner diameter="40"></mat-spinner>
+          <p>加载录制文件...</p>
+        </div>
+
+        <!-- 录制文件网格 -->
+        <div class="recordings-grid" *ngIf="!isLoading && recordings.length > 0">
+          <mat-card *ngFor="let recording of recordings; trackBy: trackByRecordingId"
+                    class="recording-card">
+            <!-- 缩略图或图标 -->
+            <div class="recording-thumbnail">
+              <img *ngIf="recording.thumbnailPath"
+                   [src]="recording.thumbnailPath"
+                   [alt]="recording.fileName"
+                   class="thumbnail-image">
+              <div *ngIf="!recording.thumbnailPath" class="thumbnail-placeholder">
+                <mat-icon>play_circle_outline</mat-icon>
+              </div>
+
+              <!-- 状态覆盖层 -->
+              <div class="status-overlay">
+                <mat-chip [class]="getStatusClass(recording.status)">
+                  {{getStatusDisplayName(recording.status)}}
+                </mat-chip>
+              </div>
+
+              <!-- 时长显示 -->
+              <div class="duration-overlay" *ngIf="recording.duration">
+                {{formatDuration(recording.duration)}}
+              </div>
+            </div>
+
+            <mat-card-content>
+              <div class="recording-info">
+                <h3 class="recording-title" [matTooltip]="recording.fileName">
+                  {{recording.fileName}}
+                </h3>
+
+                <div class="recording-details">
+                  <div class="detail-item">
+                    <mat-icon class="detail-icon">meeting_room</mat-icon>
+                    <span>{{recording.roomName}}</span>
+                  </div>
+
+                  <div class="detail-item">
+                    <mat-icon class="detail-icon">schedule</mat-icon>
+                    <span>{{formatDate(recording.createdAt)}}</span>
+                  </div>
+
+                  <div class="detail-item">
+                    <mat-icon class="detail-icon">folder</mat-icon>
+                    <span>{{formatFileSize(recording.fileSize)}}</span>
+                  </div>
+
+                  <div class="detail-item" *ngIf="recording.duration">
+                    <mat-icon class="detail-icon">timer</mat-icon>
+                    <span>{{formatDuration(recording.duration)}}</span>
+                  </div>
+                </div>
+              </div>
+            </mat-card-content>
+
+            <mat-card-actions>
+              <button mat-button
+                      color="primary"
+                      (click)="downloadRecording(recording)"
+                      [disabled]="recording.status !== 'COMPLETED'"
+                      matTooltip="下载录制文件">
+                <mat-icon>download</mat-icon>
+                下载
+              </button>
+
+              <button mat-button
+                      (click)="viewRecordingDetails(recording)"
+                      matTooltip="查看详情">
+                <mat-icon>info</mat-icon>
+                详情
+              </button>
+
+              <button mat-icon-button
+                      [matMenuTriggerFor]="recordingMenu"
+                      [matMenuTriggerData]="{recording: recording}"
+                      matTooltip="更多操作">
+                <mat-icon>more_vert</mat-icon>
+              </button>
+            </mat-card-actions>
+          </mat-card>
+        </div>
+
+        <!-- 空状态 -->
+        <div class="empty-state" *ngIf="!isLoading && recordings.length === 0">
+          <mat-icon class="empty-icon">video_library</mat-icon>
+          <h3>暂无录制文件</h3>
+          <p>开始一个会议并启用录制功能</p>
+          <button mat-raised-button color="primary" [routerLink]="['/home']">
+            创建会议
+          </button>
+        </div>
+
+        <!-- 分页器 -->
+        <mat-paginator
+          *ngIf="!isLoading && recordings.length > 0"
+          [length]="totalElements"
+          [pageSize]="pageSize"
+          [pageIndex]="currentPage"
+          [pageSizeOptions]="[10, 20, 50, 100]"
+          (page)="onPageChange($event)"
+          showFirstLastButtons>
+        </mat-paginator>
+      </div>
+    </div>
+  </div>
+
+  <!-- 录制文件操作菜单 -->
+  <mat-menu #recordingMenu="matMenu">
+    <ng-template matMenuContent let-recording="recording">
+      <button mat-menu-item
+              (click)="downloadRecording(recording)"
+              [disabled]="recording.status !== 'COMPLETED'">
+        <mat-icon>download</mat-icon>
+        <span>下载</span>
+      </button>
+
+      <button mat-menu-item
+              (click)="copyShareLink(recording)">
+        <mat-icon>share</mat-icon>
+        <span>复制分享链接</span>
+      </button>
+
+      <button mat-menu-item
+              (click)="viewRecordingDetails(recording)">
+        <mat-icon>info</mat-icon>
+        <span>查看详情</span>
+      </button>
+
+      <mat-divider></mat-divider>
+
+      <button mat-menu-item
+              class="warn-action"
+              (click)="deleteRecording(recording)">
+        <mat-icon>delete</mat-icon>
+        <span>删除</span>
+      </button>
+    </ng-template>
+  </mat-menu>
+</div>

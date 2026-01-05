@@ -1,0 +1,125 @@
+<div class="responsive-test-container">
+  <!-- 顶部工具栏 -->
+  <mat-toolbar class="test-toolbar">
+    <span>响应式设计测试</span>
+    <div class="toolbar-spacer"></div>
+    <span class="current-resolution">{{currentResolution}}</span>
+  </mat-toolbar>
+
+  <!-- 分辨率信息卡片 -->
+  <div class="resolution-info">
+    <mat-card class="info-card">
+      <mat-card-header>
+        <mat-card-title>当前屏幕信息</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="resolution-details">
+          <div class="detail-item">
+            <strong>屏幕分辨率:</strong> {{screenWidth}} × {{screenHeight}}
+          </div>
+          <div class="detail-item">
+            <strong>窗口大小:</strong> {{windowWidth}} × {{windowHeight}}
+          </div>
+          <div class="detail-item">
+            <strong>设备像素比:</strong> {{devicePixelRatio}}
+          </div>
+          <div class="detail-item">
+            <strong>分辨率类型:</strong>
+            <mat-chip [class]="getResolutionClass()">{{getResolutionType()}}</mat-chip>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- 测试预览区域 -->
+  <div class="test-preview">
+    <mat-card class="preview-card">
+      <mat-card-header>
+        <mat-card-title>会议界面预览</mat-card-title>
+        <mat-card-subtitle>模拟不同分辨率下的会议页面布局</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <!-- 模拟会议工具栏 -->
+        <div class="mock-meeting-toolbar">
+          <div class="mock-meeting-info">
+            <h3>测试会议室</h3>
+            <span class="mock-participant-count">5 人参与</span>
+          </div>
+          <div class="mock-toolbar-actions">
+            <button mat-icon-button><mat-icon>people</mat-icon></button>
+            <button mat-icon-button><mat-icon>chat</mat-icon></button>
+            <button mat-icon-button><mat-icon>exit_to_app</mat-icon></button>
+          </div>
+        </div>
+
+        <!-- 模拟视频网格 -->
+        <div class="mock-video-grid" [class]="getVideoGridClass()">
+          <div class="mock-video-container" *ngFor="let video of mockVideos; trackBy: trackByIndex">
+            <div class="mock-video-placeholder">
+              <mat-icon>person</mat-icon>
+              <span>参与者 {{video.id}}</span>
+            </div>
+            <div class="mock-video-overlay">
+              <span class="mock-participant-name">用户{{video.id}}</span>
+              <div class="mock-controls">
+                <mat-icon [class.muted]="video.muted">{{video.muted ? 'mic_off' : 'mic'}}</mat-icon>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 模拟控制栏 -->
+        <div class="mock-meeting-controls">
+          <div class="mock-controls-group">
+            <button mat-fab color="primary"><mat-icon>mic</mat-icon></button>
+            <button mat-fab color="primary"><mat-icon>videocam</mat-icon></button>
+            <button mat-fab color="primary"><mat-icon>screen_share</mat-icon></button>
+            <button mat-fab color="warn"><mat-icon>call_end</mat-icon></button>
+          </div>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <!-- 分辨率测试按钮 -->
+  <div class="test-controls">
+    <mat-card class="controls-card">
+      <mat-card-header>
+        <mat-card-title>分辨率测试</mat-card-title>
+        <mat-card-subtitle>点击按钮模拟不同分辨率的显示效果</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="resolution-buttons">
+          <button mat-raised-button
+                  color="primary"
+                  (click)="simulateResolution(3840, 2160)"
+                  [class.active]="isActiveResolution(3840, 2160)">
+            <mat-icon>4k</mat-icon>
+            4K (3840×2160)
+          </button>
+          <button mat-raised-button
+                  color="primary"
+                  (click)="simulateResolution(2560, 1440)"
+                  [class.active]="isActiveResolution(2560, 1440)">
+            <mat-icon>hd</mat-icon>
+            2K (2560×1440)
+          </button>
+          <button mat-raised-button
+                  color="primary"
+                  (click)="simulateResolution(1920, 1080)"
+                  [class.active]="isActiveResolution(1920, 1080)">
+            <mat-icon>hd</mat-icon>
+            1K (1920×1080)
+          </button>
+          <button mat-raised-button
+                  (click)="resetToActual()"
+                  [class.active]="!isSimulating">
+            <mat-icon>refresh</mat-icon>
+            实际分辨率
+          </button>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div>

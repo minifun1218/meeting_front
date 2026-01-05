@@ -1,0 +1,225 @@
+<div class="participants-panel">
+  <!-- 参与者头部 -->
+  <div class="participants-header">
+    <div class="header-title">
+      <mat-icon>people</mat-icon>
+      <span>参与者 ({{participants.length}})</span>
+    </div>
+
+    <div class="header-actions">
+      <button mat-icon-button
+              matTooltip="邀请其他人">
+        <mat-icon>person_add</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- 参与者列表 -->
+  <div class="participants-list">
+    <!-- 主持人/管理员 -->
+    <div class="participants-section" *ngIf="hosts.length > 0">
+      <div class="section-header">
+        <mat-icon class="section-icon">admin_panel_settings</mat-icon>
+        <span>主持人</span>
+      </div>
+
+      <div class="participant-item"
+           *ngFor="let participant of hosts; trackBy: trackByParticipantId">
+        <div class="participant-info">
+          <div class="participant-avatar" [class.speaking]="participant.isAudioEnabled">
+            {{getInitials(participant.userName)}}
+          </div>
+
+          <div class="participant-details">
+            <div class="participant-name">
+              {{participant.userName}}
+              <span class="local-badge" *ngIf="participant.userId === currentUserId">（我）</span>
+            </div>
+            <div class="participant-role">{{getRoleDisplayName(participant.role)}}</div>
+          </div>
+        </div>
+
+        <div class="participant-status">
+          <!-- 音频状态 -->
+          <div class="status-indicator audio"
+               [class.muted]="!participant.isAudioEnabled"
+               [matTooltip]="participant.isAudioEnabled ? '音频开启' : '音频关闭'">
+            <mat-icon>{{participant.isAudioEnabled ? 'mic' : 'mic_off'}}</mat-icon>
+          </div>
+
+          <!-- 视频状态 -->
+          <div class="status-indicator video"
+               [class.off]="!participant.isVideoEnabled"
+               [matTooltip]="participant.isVideoEnabled ? '视频开启' : '视频关闭'">
+            <mat-icon>{{participant.isVideoEnabled ? 'videocam' : 'videocam_off'}}</mat-icon>
+          </div>
+
+          <!-- 屏幕共享状态 -->
+          <div class="status-indicator screen-share"
+               *ngIf="participant.isScreenSharing"
+               matTooltip="正在共享屏幕">
+            <mat-icon>screen_share</mat-icon>
+          </div>
+
+          <!-- 操作菜单 -->
+          <button mat-icon-button
+                  [matMenuTriggerFor]="participantMenu"
+                  [matMenuTriggerData]="{participant: participant}"
+                  *ngIf="canManageParticipant(participant)"
+                  matTooltip="更多操作">
+            <mat-icon>more_vert</mat-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <mat-divider *ngIf="hosts.length > 0 && regularParticipants.length > 0"></mat-divider>
+
+    <!-- 普通参与者 -->
+    <div class="participants-section" *ngIf="regularParticipants.length > 0">
+      <div class="section-header" *ngIf="hosts.length > 0">
+        <mat-icon class="section-icon">people</mat-icon>
+        <span>参与者</span>
+      </div>
+
+      <div class="participant-item"
+           *ngFor="let participant of regularParticipants; trackBy: trackByParticipantId">
+        <div class="participant-info">
+          <div class="participant-avatar" [class.speaking]="participant.isAudioEnabled">
+            {{getInitials(participant.userName)}}
+          </div>
+
+          <div class="participant-details">
+            <div class="participant-name">
+              {{participant.userName}}
+              <span class="local-badge" *ngIf="participant.userId === currentUserId">（我）</span>
+            </div>
+            <div class="participant-role">{{getRoleDisplayName(participant.role)}}</div>
+          </div>
+        </div>
+
+        <div class="participant-status">
+          <!-- 音频状态 -->
+          <div class="status-indicator audio"
+               [class.muted]="!participant.isAudioEnabled"
+               [matTooltip]="participant.isAudioEnabled ? '音频开启' : '音频关闭'">
+            <mat-icon>{{participant.isAudioEnabled ? 'mic' : 'mic_off'}}</mat-icon>
+          </div>
+
+          <!-- 视频状态 -->
+          <div class="status-indicator video"
+               [class.off]="!participant.isVideoEnabled"
+               [matTooltip]="participant.isVideoEnabled ? '视频开启' : '视频关闭'">
+            <mat-icon>{{participant.isVideoEnabled ? 'videocam' : 'videocam_off'}}</mat-icon>
+          </div>
+
+          <!-- 屏幕共享状态 -->
+          <div class="status-indicator screen-share"
+               *ngIf="participant.isScreenSharing"
+               matTooltip="正在共享屏幕">
+            <mat-icon>screen_share</mat-icon>
+          </div>
+
+          <!-- 操作菜单 -->
+          <button mat-icon-button
+                  [matMenuTriggerFor]="participantMenu"
+                  [matMenuTriggerData]="{participant: participant}"
+                  *ngIf="canManageParticipant(participant)"
+                  matTooltip="更多操作">
+            <mat-icon>more_vert</mat-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 观察者 -->
+    <div class="participants-section" *ngIf="observers.length > 0">
+      <mat-divider></mat-divider>
+
+      <div class="section-header">
+        <mat-icon class="section-icon">visibility</mat-icon>
+        <span>观察者</span>
+      </div>
+
+      <div class="participant-item"
+           *ngFor="let participant of observers; trackBy: trackByParticipantId">
+        <div class="participant-info">
+          <div class="participant-avatar observer">
+            {{getInitials(participant.userName)}}
+          </div>
+
+          <div class="participant-details">
+            <div class="participant-name">
+              {{participant.userName}}
+              <span class="local-badge" *ngIf="participant.userId === currentUserId">（我）</span>
+            </div>
+            <div class="participant-role">{{getRoleDisplayName(participant.role)}}</div>
+          </div>
+        </div>
+
+        <div class="participant-status">
+          <!-- 观察者通常只能看不能说 -->
+          <div class="status-indicator observer-mode" matTooltip="观察模式">
+            <mat-icon>visibility</mat-icon>
+          </div>
+
+          <!-- 操作菜单 -->
+          <button mat-icon-button
+                  [matMenuTriggerFor]="participantMenu"
+                  [matMenuTriggerData]="{participant: participant}"
+                  *ngIf="canManageParticipant(participant)"
+                  matTooltip="更多操作">
+            <mat-icon>more_vert</mat-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 空状态 -->
+    <div class="empty-participants" *ngIf="participants.length === 0">
+      <mat-icon class="empty-icon">people_outline</mat-icon>
+      <p>暂无其他参与者</p>
+    </div>
+  </div>
+
+  <!-- 参与者操作菜单 -->
+  <mat-menu #participantMenu="matMenu">
+    <ng-template matMenuContent let-participant="participant">
+      <button mat-menu-item
+              (click)="onMuteParticipant.emit(participant.userId)"
+              *ngIf="participant.userId !== currentUserId && participant.isAudioEnabled">
+        <mat-icon>mic_off</mat-icon>
+        <span>静音</span>
+      </button>
+
+      <button mat-menu-item
+              (click)="onMuteParticipant.emit(participant.userId)"
+              *ngIf="participant.userId !== currentUserId && !participant.isAudioEnabled">
+        <mat-icon>mic</mat-icon>
+        <span>取消静音</span>
+      </button>
+
+      <button mat-menu-item
+              *ngIf="participant.userId !== currentUserId">
+        <mat-icon>chat</mat-icon>
+        <span>私聊</span>
+      </button>
+
+      <button mat-menu-item
+              *ngIf="participant.userId !== currentUserId">
+        <mat-icon>visibility</mat-icon>
+        <span>关注视频</span>
+      </button>
+
+      <mat-divider *ngIf="participant.userId !== currentUserId"></mat-divider>
+
+      <button mat-menu-item
+              class="warn-action"
+              (click)="onRemoveParticipant.emit(participant.userId)"
+              *ngIf="participant.userId !== currentUserId">
+        <mat-icon>remove_circle</mat-icon>
+        <span>移除参与者</span>
+      </button>
+    </ng-template>
+  </mat-menu>
+</div>

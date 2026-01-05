@@ -1,30 +1,42 @@
 /* Global Styles */
 @use '@angular/material' as mat;
 
-html, body { 
-  height: 100%; 
-  margin: 0; 
-  font-family: Roboto, "Helvetica Neue", sans-serif; 
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: Roboto, "Helvetica Neue", sans-serif;
 }
 
-/* 主题配置 */
+/* 主题配置 - 现代化深色主题 */
 @include mat.core();
 
-// 定义主题调色板
-$primary: mat.define-palette(mat.$indigo-palette, 600);
-$accent: mat.define-palette(mat.$pink-palette, A200, A100, A400);
+// 定义现代化主题调色板
+$primary: mat.define-palette(mat.$blue-palette, 700);
+$accent: mat.define-palette(mat.$purple-palette, A200);
 $warn: mat.define-palette(mat.$red-palette);
 
-// 创建主题
+// 创建现代化主题
 $app-theme: mat.define-light-theme((
   color: (
     primary: $primary,
     accent: $accent,
     warn: $warn,
-  )
+  ),
+  typography: mat.define-typography-config(),
+  density: 0
 ));
 
 @include mat.all-component-themes($app-theme);
+
+/* 全局平滑滚动 */
+html {
+  scroll-behavior: smooth;
+}
+
+/* 现代化背景渐变 */
+body {
+  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
 
 /* 自定义样式 */
 .full-width {
@@ -184,7 +196,6 @@ $app-theme: mat.define-light-theme((
   bottom: 20px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(10px);
   border-radius: 50px;
   padding: 12px 24px;
@@ -726,4 +737,169 @@ $app-theme: mat.define-light-theme((
   .sidebar-toggle {
     display: none;
   }
+}
+
+/* ====== 现代化设计增强 ====== */
+
+/* 高级阴影效果 */
+.elegant-shadow {
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.elegant-shadow:hover {
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
+}
+
+/* 毛玻璃效果 */
+.glass-effect {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+/* 现代化卡片 */
+.modern-card {
+  background: white;
+  border-radius: 20px;
+  padding: 32px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.modern-card:hover {
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12);
+  transform: translateY(-4px);
+}
+
+/* 优雅的渐变按钮 */
+.gradient-button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  padding: 14px 32px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.gradient-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+}
+
+.gradient-button:active {
+  transform: translateY(0);
+}
+
+/* 淡入动画 */
+.fade-in {
+  animation: fadeIn 0.6s ease-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 滑入动画 */
+.slide-in {
+  animation: slideIn 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* 缩放动画 */
+.scale-in {
+  animation: scaleIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* 波纹效果 */
+.ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.ripple:active::after {
+  width: 300px;
+  height: 300px;
+}
+
+/* 高级间距 */
+.mt-lg { margin-top: 48px; }
+.mb-lg { margin-bottom: 48px; }
+.ml-lg { margin-left: 48px; }
+.mr-lg { margin-right: 48px; }
+
+.pt-lg { padding-top: 48px; }
+.pb-lg { padding-bottom: 48px; }
+.pl-lg { padding-left: 48px; }
+.pr-lg { padding-right: 48px; }
+
+.mt-xl { margin-top: 64px; }
+.mb-xl { margin-bottom: 64px; }
+.ml-xl { margin-left: 64px; }
+.mr-xl { margin-right: 64px; }
+
+.pt-xl { padding-top: 64px; }
+.pb-xl { padding-bottom: 64px; }
+.pl-xl { padding-left: 64px; }
+.pr-xl { padding-right: 64px; }
+
+/* 响应式字体大小 */
+.text-display-1 { font-size: 48px; font-weight: 300; line-height: 1.2; }
+.text-display-2 { font-size: 40px; font-weight: 300; line-height: 1.2; }
+.text-headline { font-size: 28px; font-weight: 400; }
+.text-title { font-size: 20px; font-weight: 500; }
+
+@media (max-width: 768px) {
+  .text-display-1 { font-size: 36px; }
+  .text-display-2 { font-size: 32px; }
+  .text-headline { font-size: 24px; }
+  .text-title { font-size: 18px; }
 }

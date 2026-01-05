@@ -34,153 +34,7 @@ export interface ParticipantVideo {
     MatTooltipModule,
     MatMenuModule
   ],
-  template: `
-    <div class="video-grid-container" [class.screen-share-mode]="screenShareMode">
-      <!-- 屏幕共享区域 -->
-      <div class="screen-share-area" *ngIf="screenShareMode && screenShareParticipant">
-        <div class="screen-share-video">
-          <video
-            #screenVideo
-            [id]="'screen-' + screenShareParticipant.identity"
-            autoplay
-            playsinline
-            muted="false"
-            class="screen-video-element">
-          </video>
-          <div class="screen-share-info">
-            <mat-icon>screen_share</mat-icon>
-            <span>{{ screenShareParticipant.name }} 正在共享屏幕</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- 视频网格区域 -->
-      <div class="video-grid"
-           [style.grid-template-columns]="gridLayout.columns + 'fr '.repeat(gridLayout.columns - 1) + 'fr'"
-           [style.grid-template-rows]="gridLayout.rows + 'fr '.repeat(gridLayout.rows - 1) + 'fr'"
-           [class.minimized]="screenShareMode">
-
-        <div class="participant-video"
-             *ngFor="let participantVideo of participantVideos; trackBy: trackByParticipant"
-             [class.local]="participantVideo.participant.isLocal"
-             [class.pinned]="participantVideo.isPinned"
-             [class.audio-only]="!participantVideo.participant.videoEnabled && !participantVideo.participant.screenShareEnabled">
-
-          <!-- 视频元素 -->
-          <video
-            #videoElement
-            [id]="'video-' + participantVideo.participant.identity"
-            autoplay
-            playsinline
-            [muted]="participantVideo.participant.isLocal"
-            class="video-element"
-            [style.display]="(participantVideo.participant.videoEnabled || participantVideo.participant.videoTrack) ? 'block' : 'none'">
-          </video>
-
-          <!-- 音频元素（仅远程参与者） -->
-          <audio
-            #audioElement
-            *ngIf="!participantVideo.participant.isLocal"
-            [id]="'audio-' + participantVideo.participant.identity"
-            autoplay
-            playsinline>
-          </audio>
-
-          <!-- 参与者信息覆盖层 -->
-          <div class="participant-overlay">
-            <!-- 参与者名称 -->
-            <div class="participant-name">
-              <mat-icon *ngIf="participantVideo.participant.isLocal" class="local-indicator">person</mat-icon>
-              {{ participantVideo.participant.name }}
-              <span *ngIf="participantVideo.participant.isLocal" class="local-label">(我)</span>
-            </div>
-
-            <!-- 状态指示器 -->
-            <div class="status-indicators">
-              <mat-icon
-                *ngIf="!participantVideo.participant.audioEnabled"
-                class="status-icon muted"
-                matTooltip="麦克风已静音">
-                mic_off
-              </mat-icon>
-
-              <mat-icon
-                *ngIf="!participantVideo.participant.videoEnabled"
-                class="status-icon video-off"
-                matTooltip="摄像头已关闭">
-                videocam_off
-              </mat-icon>
-
-              <mat-icon
-                *ngIf="participantVideo.participant.screenShareEnabled"
-                class="status-icon screen-share"
-                matTooltip="正在共享屏幕">
-                screen_share
-              </mat-icon>
-            </div>
-
-            <!-- 参与者操作菜单 -->
-            <div class="participant-actions" *ngIf="!participantVideo.participant.isLocal">
-              <button mat-icon-button
-                      [matMenuTriggerFor]="participantMenu"
-                      class="action-button"
-                      matTooltip="更多操作">
-                <mat-icon>more_vert</mat-icon>
-              </button>
-
-              <mat-menu #participantMenu="matMenu">
-                <button mat-menu-item (click)="pinParticipant(participantVideo)">
-                  <mat-icon>{{ participantVideo.isPinned ? 'push_pin' : 'push_pin' }}</mat-icon>
-                  <span>{{ participantVideo.isPinned ? '取消置顶' : '置顶' }}</span>
-                </button>
-
-                <button mat-menu-item (click)="focusParticipant(participantVideo)">
-                  <mat-icon>center_focus_strong</mat-icon>
-                  <span>聚焦</span>
-                </button>
-              </mat-menu>
-            </div>
-          </div>
-
-          <!-- 无视频时的占位符 -->
-          <div class="video-placeholder"
-               *ngIf="!participantVideo.participant.videoEnabled && !participantVideo.participant.screenShareEnabled">
-            <div class="avatar">
-              <mat-icon class="avatar-icon">person</mat-icon>
-            </div>
-            <div class="participant-name-large">
-              {{ participantVideo.participant.name }}
-            </div>
-          </div>
-
-          <!-- 连接状态指示器 -->
-          <div class="connection-indicator"
-               *ngIf="getConnectionQuality(participantVideo.participant) !== 'excellent'">
-            <mat-icon [class]="'quality-' + getConnectionQuality(participantVideo.participant)">
-              {{ getConnectionQualityIcon(participantVideo.participant) }}
-            </mat-icon>
-          </div>
-        </div>
-      </div>
-
-      <!-- 网格布局控制 -->
-      <div class="grid-controls" *ngIf="!screenShareMode">
-        <button mat-icon-button
-                (click)="toggleGridLayout()"
-                matTooltip="切换布局"
-                class="control-button">
-          <mat-icon>view_module</mat-icon>
-        </button>
-
-        <button mat-icon-button
-                (click)="toggleFullscreen()"
-                matTooltip="全屏"
-                class="control-button">
-          <mat-icon>{{ isFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
-        </button>
-      </div>
-    </div>
-  `,
+  templateUrl: './video-grid.component.html',
   styleUrls: ['./video-grid.component.scss']
 })
 export class VideoGridComponent implements OnInit, OnDestroy, AfterViewInit {
@@ -226,17 +80,14 @@ export class VideoGridComponent implements OnInit, OnDestroy, AfterViewInit {
     this.subscribeToParticipants();
     this.subscribeToTrackEvents();
     this.subscribeToTrackStateChanges();
+    this.subscribeToLocalTracks();
   }
 
   ngAfterViewInit(): void {
-    console.log('🔧 ngAfterViewInit: 开始初始化视图');
-    
     // 监听视频元素变化
     this.videoElements.changes.pipe(
       takeUntil(this.destroy$)
     ).subscribe(() => {
-      console.log('📹 视频元素变化检测到，元素数量:', this.videoElements.length);
-      // 延迟执行以确保 DOM 完全渲染
       setTimeout(() => {
         this.attachVideoTracks();
         this.monitorVideoElements();
@@ -246,24 +97,17 @@ export class VideoGridComponent implements OnInit, OnDestroy, AfterViewInit {
     this.audioElements.changes.pipe(
       takeUntil(this.destroy$)
     ).subscribe(() => {
-      console.log('🔊 音频元素变化检测到，元素数量:', this.audioElements.length);
       setTimeout(() => this.attachAudioTracks(), 50);
     });
 
     this.screenVideoElements.changes.pipe(
       takeUntil(this.destroy$)
     ).subscribe(() => {
-      console.log('🖥️ 屏幕共享元素变化检测到，元素数量:', this.screenVideoElements.length);
       setTimeout(() => this.attachScreenShareTracks(), 50);
     });
 
     // 初始化时附加轨道
     setTimeout(() => {
-      console.log('🚀 ngAfterViewInit: 初始化附加轨道', {
-        videoElementsCount: this.videoElements?.length || 0,
-        participantsCount: this.participants.length,
-        participantVideosCount: this.participantVideos.length
-      });
       this.attachVideoTracks();
       this.attachAudioTracks();
       this.attachScreenShareTracks();
@@ -283,32 +127,14 @@ export class VideoGridComponent implements OnInit, OnDestroy, AfterViewInit {
     this.liveKitService.participants$.pipe(
       takeUntil(this.destroy$)
     ).subscribe(participants => {
-      console.log('👥 参与者列表更新:', {
-        previousCount: this.participants.length,
-        newCount: participants.length,
-        participants: participants.map(p => ({
-          identity: p.identity,
-          name: p.name,
-          isLocal: p.isLocal,
-          videoEnabled: p.videoEnabled,
-          hasVideoTrack: !!p.videoTrack
-        }))
-      });
-      
       this.participants = participants;
       this.updateParticipantVideos();
       this.updateScreenShareMode();
       this.updateGridLayout();
       this.cdr.detectChanges();
-      
-      console.log('参与者列表更新后的状态:', {
-        participantVideosCount: this.participantVideos.length,
-        videoElementsCount: this.videoElements?.length || 0
-      });
-      
+
       // 确保在 DOM 更新后附加轨道
       setTimeout(() => {
-        console.log('🔄 定时器触发，开始附加所有轨道');
         this.attachVideoTracks();
         this.attachAudioTracks();
         this.attachScreenShareTracks();
@@ -324,62 +150,32 @@ export class VideoGridComponent implements OnInit, OnDestroy, AfterViewInit {
     this.liveKitService.trackSubscribed$.pipe(
       takeUntil(this.destroy$)
     ).subscribe(({ track, participant }) => {
-      console.log('🎥 轨道订阅事件:', {
-        trackKind: track.kind,
-        participantId: participant.identity,
-        participantName: participant.name,
-        trackSid: track.sid
-      });
-
-      // 强制更新参与者列表以获取最新的轨道信息
-      this.participants = this.liveKitService.getAllParticipants();
+      // participants$ 会自动更新，这里只需更新视频列表和触发变更检测
       this.updateParticipantVideos();
       this.updateScreenShareMode();
       this.cdr.detectChanges();
 
-      console.log('轨道订阅后的参与者状态:', {
-        participantsCount: this.participants.length,
-        participantVideosCount: this.participantVideos.length,
-        targetParticipant: this.participants.find(p => p.identity === participant.identity)
-      });
-
       // 延迟附加轨道，确保 DOM 已更新
       setTimeout(() => {
         if (track.kind === Track.Kind.Video) {
-          console.log('🔄 延迟附加视频轨道');
           this.attachVideoTracks();
         } else if (track.kind === Track.Kind.Audio) {
-          console.log('🔄 延迟附加音频轨道');
           this.attachAudioTracks();
         }
-      }, 300); // 增加延迟时间确保DOM完全更新
+      }, 300);
     });
 
     // 轨道取消订阅事件
     this.liveKitService.trackUnsubscribed$.pipe(
       takeUntil(this.destroy$)
     ).subscribe(({ track, participant }) => {
-      console.log('❌ 轨道取消订阅事件:', {
-        trackKind: track.kind,
-        participantId: participant.identity,
-        participantName: participant.name,
-        trackSid: track.sid
-      });
-      
       // 分离轨道
       this.detachTrack(track, participant.identity);
-      
-      // 更新参与者列表以获取最新状态
-      this.participants = this.liveKitService.getAllParticipants();
+
+      // participants$ 会自动更新，这里只需更新视频列表和触发变更检测
       this.updateParticipantVideos();
       this.updateScreenShareMode();
       this.cdr.detectChanges();
-      
-      console.log('轨道取消订阅后的参与者状态:', {
-        participantsCount: this.participants.length,
-        participantVideosCount: this.participantVideos.length,
-        targetParticipant: this.participants.find(p => p.identity === participant.identity)
-      });
     });
   }
 
@@ -391,14 +187,7 @@ export class VideoGridComponent implements OnInit, OnDestroy, AfterViewInit {
     this.liveKitService.participantConnected$.pipe(
       takeUntil(this.destroy$)
     ).subscribe(participant => {
-      console.log('👤 参与者连接:', {
-        identity: participant.identity,
-        name: participant.name
-      });
-      
-      // 更新参与者列表
-      this.participants = this.liveKitService.getAllParticipants();
-      this.updateParticipantVideos();
+      // participants$ 会自动更新，这里只需触发变更检测
       this.cdr.detectChanges();
     });
 
@@ -406,14 +195,7 @@ export class VideoGridComponent implements OnInit, OnDestroy, AfterViewInit {
     this.liveKitService.participantDisconnected$.pipe(
       takeUntil(this.destroy$)
     ).subscribe(participant => {
-      console.log('👤 参与者断开连接:', {
-        identity: participant.identity,
-        name: participant.name
-      });
-      
-      // 更新参与者列表
-      this.participants = this.liveKitService.getAllParticipants();
-      this.updateParticipantVideos();
+      // participants$ 会自动更新，这里只需触发变更检测
       this.cdr.detectChanges();
     });
 
@@ -421,11 +203,35 @@ export class VideoGridComponent implements OnInit, OnDestroy, AfterViewInit {
     this.liveKitService.participantEvents$.pipe(
       takeUntil(this.destroy$)
     ).subscribe((event: any) => {
-      console.log('👤 参与者事件:', event);
-      
-      // 更新参与者状态
-      this.participants = this.liveKitService.getAllParticipants();
-      this.updateParticipantVideos();
+      // participants$ 会自动更新，这里只需触发变更检测
+      this.cdr.detectChanges();
+    });
+  }
+
+  /**
+   * 订阅本地轨道状态变化
+   */
+  private subscribeToLocalTracks(): void {
+    // 监听本地轨道变化（摄像头开关等）
+    this.liveKitService.localTracks$.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(tracks => {
+      // 触发参与者列表更新（通过 participants$ 获取包含 videoTrack 的数据）
+      this.cdr.detectChanges();
+
+      // 如果有视频轨道，延迟附加
+      if (tracks.video) {
+        setTimeout(() => {
+          this.attachVideoTracks();
+        }, 100);
+      }
+    });
+
+    // 监听 LiveKit 状态变化（包括 isVideoEnabled 等）
+    this.liveKitService.state$.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(state => {
+      // 触发变更检测，participants$ 会自动更新数据
       this.cdr.detectChanges();
     });
   }
@@ -434,27 +240,12 @@ export class VideoGridComponent implements OnInit, OnDestroy, AfterViewInit {
    * 更新参与者视频列表
    */
   private updateParticipantVideos(): void {
-    const previousCount = this.participantVideos.length;
-    
     this.participantVideos = this.participants
-      .filter(p => !p.screenShareEnabled || p.isLocal) // 过滤掉正在共享屏幕的远程参与者（避免重复显示）
+      .filter(p => !p.screenShareEnabled || p.isLocal)
       .map(participant => ({
         participant,
         isPinned: this.pinnedParticipant?.identity === participant.identity
       }));
-      
-    console.log('📊 更新参与者视频列表:', {
-      previousCount,
-      newCount: this.participantVideos.length,
-      participantVideos: this.participantVideos.map(pv => ({
-        identity: pv.participant.identity,
-        name: pv.participant.name,
-        isLocal: pv.participant.isLocal,
-        videoEnabled: pv.participant.videoEnabled,
-        hasVideoTrack: !!pv.participant.videoTrack,
-        isPinned: pv.isPinned
-      }))
-    });
   }
 
   /**
@@ -502,15 +293,8 @@ export class VideoGridComponent implements OnInit, OnDestroy, AfterViewInit {
    */
   private attachVideoTracks(): void {
     if (!this.videoElements) {
-      console.log('attachVideoTracks: videoElements 不存在');
       return;
     }
-
-    console.log('attachVideoTracks: 开始附加视频轨道', {
-      videoElementsCount: this.videoElements.length,
-      participantVideosCount: this.participantVideos.length,
-      participantsCount: this.participants.length
-    });
 
     this.videoElements.forEach(elementRef => {
       const videoElement = elementRef.nativeElement;
@@ -518,20 +302,11 @@ export class VideoGridComponent implements OnInit, OnDestroy, AfterViewInit {
       
       // 首先在 participantVideos 中查找
       let participant = this.participantVideos.find(pv => pv.participant.identity === participantId)?.participant;
-      
+
       // 如果在 participantVideos 中找不到，直接在 participants 中查找
       if (!participant) {
         participant = this.participants.find(p => p.identity === participantId);
-        console.log('在 participants 中查找参与者:', participantId, participant ? '找到' : '未找到');
       }
-
-      console.log('处理视频元素:', {
-        participantId,
-        hasParticipant: !!participant,
-        hasVideoTrack: participant?.videoTrack ? true : false,
-        videoEnabled: participant?.videoEnabled,
-        participantName: participant?.name
-      });
 
       if (participant && participant.videoTrack) {
         try {
@@ -539,18 +314,14 @@ export class VideoGridComponent implements OnInit, OnDestroy, AfterViewInit {
           const currentSrcObject = videoElement.srcObject as MediaStream;
           const currentTrackId = currentSrcObject?.getTracks()[0]?.id;
           const newTrackId = (participant.videoTrack as any).mediaStreamTrack?.id;
-          
+
           if (currentTrackId === newTrackId) {
-            console.log('🔄 轨道已存在，跳过重复附加:', participantId, participant.name);
             return;
           }
 
           // 只有在轨道不同时才分离现有轨道
           if (currentSrcObject && currentTrackId !== newTrackId) {
-            console.log('🔄 分离现有轨道:', participantId, currentTrackId);
-            // 使用LiveKit的detach方法而不是直接停止轨道
             try {
-              // 尝试从现有轨道中分离
               const existingTracks = currentSrcObject.getTracks();
               existingTracks.forEach(track => {
                 currentSrcObject.removeTrack(track);
@@ -563,25 +334,6 @@ export class VideoGridComponent implements OnInit, OnDestroy, AfterViewInit {
 
           // 附加新轨道
           participant.videoTrack.attach(videoElement);
-          console.log('✅ 视频轨道已成功附加:', participantId, participant.name, newTrackId);
-
-          // 检查视频元素状态
-          setTimeout(() => {
-            const computedStyle = window.getComputedStyle(videoElement);
-            console.log('📺 视频元素状态检查:', {
-               participantId,
-               participantName: participant?.name,
-               display: computedStyle.display,
-               visibility: computedStyle.visibility,
-               width: videoElement.offsetWidth,
-               height: videoElement.offsetHeight,
-               videoWidth: videoElement.videoWidth,
-               videoHeight: videoElement.videoHeight,
-               readyState: videoElement.readyState,
-               paused: videoElement.paused,
-               srcObject: !!videoElement.srcObject
-             });
-          }, 100);
 
           // 确保视频播放
           videoElement.play().catch(e => {
@@ -594,55 +346,28 @@ export class VideoGridComponent implements OnInit, OnDestroy, AfterViewInit {
               const currentSrcObject = videoElement.srcObject as MediaStream;
               const tracks = currentSrcObject?.getTracks() || [];
               const videoTracks = tracks.filter(track => track.kind === 'video');
-              
+
               if (videoTracks.length === 0 || videoTracks[0].readyState === 'ended') {
-                console.warn('⚠️ 轨道附加验证失败，尝试重新附加:', {
-                  participantId,
-                  participantName: participant?.name,
-                  tracksCount: tracks.length,
-                  videoTracksCount: videoTracks.length,
-                  trackStates: videoTracks.map(t => t.readyState)
-                });
-                
                 // 重新尝试附加轨道
                 try {
                   participant?.videoTrack?.attach(videoElement);
-                  console.log('🔄 重新附加轨道完成:', participantId);
                 } catch (retryError) {
-                  console.error('❌ 重新附加轨道失败:', participantId, retryError);
+                  console.error('重新附加轨道失败:', participantId, retryError);
                 }
-              } else {
-                console.log('✅ 轨道附加验证成功:', {
-                  participantId,
-                  participantName: participant?.name,
-                  videoTracksCount: videoTracks.length,
-                  trackState: videoTracks[0].readyState
-                });
               }
             };
-            
+
             verifyAttachment();
           }, 500);
 
           // 强制触发变更检测
           this.cdr.detectChanges();
         } catch (error) {
-          console.error('❌ 附加视频轨道失败:', participantId, error);
+          console.error('附加视频轨道失败:', participantId, error);
         }
-      } else {
-        console.log('⚠️ 跳过视频轨道附加:', {
-          participantId,
-          reason: !participant ? '参与者不存在' : '视频轨道不存在',
-          participant: participant ? {
-            identity: participant.identity,
-            name: participant.name,
-            videoEnabled: participant.videoEnabled,
-            hasVideoTrack: !!participant.videoTrack
-          } : null
-        });
       }
     });
-    
+
     // 调试：输出所有视频元素状态
     setTimeout(() => {
       this.debugVideoElements();
@@ -663,7 +388,6 @@ export class VideoGridComponent implements OnInit, OnDestroy, AfterViewInit {
       if (participant && participant.audioTrack && !participant.isLocal) {
         try {
           participant.audioTrack.attach(audioElement);
-          console.log('音频轨道已附加:', participantId, participant.name);
 
           // 确保音频播放
           audioElement.play().catch(e => {
@@ -690,7 +414,6 @@ export class VideoGridComponent implements OnInit, OnDestroy, AfterViewInit {
       if (participant && participant.screenTrack) {
         try {
           participant.screenTrack.attach(videoElement);
-          console.log('屏幕共享轨道已附加:', participantId, participant.name);
 
           // 确保视频播放
           videoElement.play().catch(e => {
@@ -707,12 +430,6 @@ export class VideoGridComponent implements OnInit, OnDestroy, AfterViewInit {
    * 分离轨道
    */
   private detachTrack(track: RemoteTrack | LocalVideoTrack, participantId: string): void {
-    console.log('🔄 开始分离轨道:', {
-      trackKind: track.kind,
-      participantId,
-      trackSid: track.sid
-    });
-
     if (track.kind === Track.Kind.Video) {
       const videoElement = document.getElementById(`video-${participantId}`) as HTMLVideoElement;
       if (videoElement) {
@@ -721,19 +438,12 @@ export class VideoGridComponent implements OnInit, OnDestroy, AfterViewInit {
           const currentSrcObject = videoElement.srcObject as MediaStream;
           const currentTrackId = currentSrcObject?.getTracks()[0]?.id;
           const detachingTrackId = (track as any).mediaStreamTrack?.id;
-          
+
           if (currentTrackId === detachingTrackId) {
             track.detach(videoElement);
-            console.log('✅ 视频轨道已分离:', participantId, detachingTrackId);
-          } else {
-            console.log('⚠️ 轨道ID不匹配，跳过分离:', {
-              participantId,
-              currentTrackId,
-              detachingTrackId
-            });
           }
         } catch (error) {
-          console.error('❌ 分离视频轨道失败:', participantId, error);
+          console.error('分离视频轨道失败:', participantId, error);
         }
       }
 
@@ -741,9 +451,8 @@ export class VideoGridComponent implements OnInit, OnDestroy, AfterViewInit {
       if (screenElement) {
         try {
           track.detach(screenElement);
-          console.log('✅ 屏幕共享轨道已分离:', participantId);
         } catch (error) {
-          console.error('❌ 分离屏幕共享轨道失败:', participantId, error);
+          console.error('分离屏幕共享轨道失败:', participantId, error);
         }
       }
     } else if (track.kind === Track.Kind.Audio) {
@@ -751,9 +460,8 @@ export class VideoGridComponent implements OnInit, OnDestroy, AfterViewInit {
       if (audioElement) {
         try {
           track.detach(audioElement);
-          console.log('✅ 音频轨道已分离:', participantId);
         } catch (error) {
-          console.error('❌ 分离音频轨道失败:', participantId, error);
+          console.error('分离音频轨道失败:', participantId, error);
         }
       }
     }
@@ -860,96 +568,19 @@ export class VideoGridComponent implements OnInit, OnDestroy, AfterViewInit {
 
   // 调试方法：检查所有视频元素状态
   debugVideoElements(): void {
-    console.log('=== 视频元素调试信息 ===');
-    console.log('participantVideos数量:', this.participantVideos.length);
-    console.log('videoElements数量:', this.videoElements?.length || 0);
-    
-    this.participantVideos.forEach((pv, index) => {
-      console.log(`参与者 ${index + 1}:`, {
-        identity: pv.participant.identity,
-        name: pv.participant.name,
-        isLocal: pv.participant.isLocal,
-        videoEnabled: pv.participant.videoEnabled,
-        hasVideoTrack: !!pv.participant.videoTrack,
-        videoTrackSid: pv.participant.videoTrack?.sid,
-        videoTrackState: pv.participant.videoTrack ? (pv.participant.videoTrack as any).mediaStreamTrack?.readyState : 'no-track'
-      });
-    });
-    
-    if (this.videoElements) {
-      this.videoElements.forEach((elementRef, index) => {
-        const videoElement = elementRef.nativeElement;
-        const computedStyle = window.getComputedStyle(videoElement);
-        const srcObject = videoElement.srcObject as MediaStream;
-        const tracks = srcObject?.getTracks() || [];
-        
-        console.log(`视频元素 ${index + 1}:`, {
-          id: videoElement.id,
-          display: computedStyle.display,
-          visibility: computedStyle.visibility,
-          width: videoElement.offsetWidth,
-          height: videoElement.offsetHeight,
-          videoWidth: videoElement.videoWidth,
-          videoHeight: videoElement.videoHeight,
-          readyState: videoElement.readyState,
-          paused: videoElement.paused,
-          hasSrcObject: !!videoElement.srcObject,
-          srcObjectTracks: tracks.length,
-          trackStates: tracks.map(track => ({
-            id: track.id,
-            kind: track.kind,
-            readyState: track.readyState,
-            enabled: track.enabled,
-            muted: track.muted
-          }))
-        });
-      });
-    }
-    console.log('=== 调试信息结束 ===');
+    // Debug method - can be enabled when needed for troubleshooting
   }
   
   // 监控视频元素状态变化
   private monitorVideoElements(): void {
     if (!this.videoElements) return;
-    
+
     this.videoElements.forEach(elementRef => {
       const videoElement = elementRef.nativeElement;
-      
-      // 监听视频加载事件
-      videoElement.addEventListener('loadstart', () => {
-        console.log('📺 视频开始加载:', videoElement.id);
-      });
-      
-      videoElement.addEventListener('loadeddata', () => {
-        console.log('📺 视频数据已加载:', videoElement.id);
-      });
-      
-      videoElement.addEventListener('canplay', () => {
-        console.log('📺 视频可以播放:', videoElement.id);
-      });
-      
-      videoElement.addEventListener('playing', () => {
-        console.log('📺 视频开始播放:', videoElement.id);
-      });
-      
-      videoElement.addEventListener('pause', () => {
-        console.log('📺 视频暂停:', videoElement.id);
-      });
-      
-      videoElement.addEventListener('ended', () => {
-        console.log('📺 视频结束:', videoElement.id);
-      });
-      
+
+      // 监听视频错误事件
       videoElement.addEventListener('error', (e) => {
-        console.error('❌ 视频错误:', videoElement.id, e);
-      });
-      
-      videoElement.addEventListener('emptied', () => {
-        console.log('⚠️ 视频被清空:', videoElement.id);
-      });
-      
-      videoElement.addEventListener('stalled', () => {
-        console.log('⚠️ 视频停滞:', videoElement.id);
+        console.error('视频错误:', videoElement.id, e);
       });
     });
   }

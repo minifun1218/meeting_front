@@ -78,6 +78,16 @@ export class MeetingService {
   }
 
   /**
+   * 删除会议房间（仅创建者可删除）
+   */
+  deleteRoom(roomName: string): Observable<{ message: string }> {
+    return this.http.delete<{ message: string }>(
+      `${this.apiUrl}/rooms/${roomName}`,
+      { headers: this.getHttpHeaders() }
+    );
+  }
+
+  /**
    * 获取用户的会议房间列表
    */
   getUserRooms(): Observable<MeetingRoom[]> {

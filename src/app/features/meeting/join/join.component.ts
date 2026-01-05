@@ -17,49 +17,8 @@ import { Subject } from 'rxjs';
     MatProgressSpinnerModule,
     MatSnackBarModule
   ],
-  template: `
-    <div class="join-container">
-      <div class="join-content">
-        <mat-spinner diameter="50"></mat-spinner>
-        <h2>正在验证邀请码...</h2>
-        <p>请稍候，我们正在为您加入会议</p>
-      </div>
-    </div>
-  `,
-  styles: [`
-    .join-container {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    }
-    
-    .join-content {
-      text-align: center;
-      background: white;
-      padding: 2rem;
-      border-radius: 12px;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-      max-width: 400px;
-      width: 90%;
-    }
-    
-    h2 {
-      margin: 1rem 0 0.5rem 0;
-      color: #333;
-      font-weight: 500;
-    }
-    
-    p {
-      color: #666;
-      margin: 0;
-    }
-    
-    mat-spinner {
-      margin: 0 auto 1rem auto;
-    }
-  `]
+  templateUrl: './join.component.html',
+  styleUrls: ['./join.component.scss']
 })
 export class JoinComponent implements OnInit {
   private destroy$ = new Subject<void>();

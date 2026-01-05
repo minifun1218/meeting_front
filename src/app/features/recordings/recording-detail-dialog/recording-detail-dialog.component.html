@@ -1,0 +1,119 @@
+<div class="dialog-container">
+  <div class="dialog-header">
+    <h2 mat-dialog-title>录制详情</h2>
+    <button mat-icon-button mat-dialog-close>
+      <mat-icon>close</mat-icon>
+    </button>
+  </div>
+
+  <mat-dialog-content class="dialog-content">
+    <div class="recording-info">
+      <!-- 基本信息 -->
+      <div class="info-section">
+        <h3>基本信息</h3>
+        <div class="info-grid">
+          <div class="info-item">
+            <label>文件名:</label>
+            <span>{{ recording.fileName }}</span>
+          </div>
+          <div class="info-item">
+            <label>房间名称:</label>
+            <span>{{ recording.roomName }}</span>
+          </div>
+          <div class="info-item">
+            <label>状态:</label>
+            <span class="status-badge" [ngClass]="getStatusClass(recording.status)">
+              {{ getStatusDisplayName(recording.status) }}
+            </span>
+          </div>
+          <div class="info-item">
+            <label>创建时间:</label>
+            <span>{{ formatDate(recording.createdAt) }}</span>
+          </div>
+          <div class="info-item">
+            <label>文件大小:</label>
+            <span>{{ formatFileSize(recording.fileSize) }}</span>
+          </div>
+          <div class="info-item">
+            <label>录制时长:</label>
+            <span>{{ formatDuration(recording.duration) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 技术信息 -->
+      <div class="info-section" *ngIf="recording.metadata">
+        <h3>技术信息</h3>
+        <div class="info-grid">
+          <div class="info-item" *ngIf="recording.metadata.resolution">
+            <label>分辨率:</label>
+            <span>{{ recording.metadata.resolution }}</span>
+          </div>
+          <div class="info-item" *ngIf="recording.metadata.frameRate">
+            <label>帧率:</label>
+            <span>{{ recording.metadata.frameRate }} fps</span>
+          </div>
+          <div class="info-item" *ngIf="recording.metadata.bitrate">
+            <label>比特率:</label>
+            <span>{{ recording.metadata.bitrate }} kbps</span>
+          </div>
+          <div class="info-item" *ngIf="recording.metadata.codec">
+            <label>编码格式:</label>
+            <span>{{ recording.metadata.codec }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 编辑信息 -->
+      <div class="info-section">
+        <h3>编辑信息</h3>
+        <form [formGroup]="editForm" class="edit-form">
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>文件名</mat-label>
+            <input matInput formControlName="fileName" placeholder="输入文件名">
+            <mat-error *ngIf="editForm.get('fileName')?.hasError('required')">
+              文件名不能为空
+            </mat-error>
+          </mat-form-field>
+
+          <mat-form-field appearance="outline" class="full-width">
+            <mat-label>描述</mat-label>
+            <textarea matInput formControlName="description"
+                     placeholder="添加录制描述" rows="3"></textarea>
+          </mat-form-field>
+
+          <div class="form-actions">
+            <button mat-raised-button color="primary"
+                    (click)="updateRecording()"
+                    [disabled]="editForm.invalid || isUpdating">
+              <mat-icon *ngIf="isUpdating">hourglass_empty</mat-icon>
+              <mat-icon *ngIf="!isUpdating">save</mat-icon>
+              {{ isUpdating ? '保存中...' : '保存更改' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </mat-dialog-content>
+
+  <mat-dialog-actions class="dialog-actions">
+    <button mat-button (click)="copyShareLink()">
+      <mat-icon>share</mat-icon>
+      复制分享链接
+    </button>
+
+    <button mat-button color="primary"
+            (click)="downloadRecording()"
+            [disabled]="recording.status !== 'COMPLETED'">
+      <mat-icon>download</mat-icon>
+      下载
+    </button>
+
+    <button mat-button color="warn" (click)="deleteRecording()">
+      <mat-icon>delete</mat-icon>
+      删除
+    </button>
+
+    <button mat-button mat-dialog-close>关闭</button>
+  </mat-dialog-actions>
+</div>

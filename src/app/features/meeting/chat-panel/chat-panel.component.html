@@ -1,0 +1,131 @@
+<div class="chat-panel">
+  <!-- 聊天头部 -->
+  <div class="chat-header">
+    <div class="header-title">
+      <mat-icon>chat</mat-icon>
+      <span>会议聊天</span>
+    </div>
+
+    <div class="header-actions">
+      <button
+        mat-icon-button
+        (click)="loadChatHistory()"
+        [disabled]="isLoadingHistory"
+        matTooltip="刷新消息">
+        <mat-icon *ngIf="!isLoadingHistory">refresh</mat-icon>
+        <mat-spinner *ngIf="isLoadingHistory" diameter="20"></mat-spinner>
+      </button>
+
+      <button
+        mat-icon-button
+        (click)="onClose.emit()"
+        matTooltip="关闭聊天">
+        <mat-icon>close</mat-icon>
+      </button>
+    </div>
+  </div>
+
+  <!-- 消息列表 -->
+  <div class="chat-messages" #messagesContainer>
+    <div class="loading-container" *ngIf="isLoadingHistory && messages.length === 0">
+      <mat-spinner diameter="30"></mat-spinner>
+      <p>加载消息...</p>
+    </div>
+
+    <div class="messages-list" *ngIf="messages.length > 0">
+      <div
+        *ngFor="let message of messages; trackBy: trackByMessageId"
+        class="message-item"
+        [class.own-message]="isOwnMessage(message)"
+        [class.other-message]="!isOwnMessage(message)">
+
+        <!-- 其他人的消息 -->
+        <div *ngIf="!isOwnMessage(message)" class="message-container other">
+          <div class="message-avatar">
+            {{getInitials(message.userName)}}
+          </div>
+
+          <div class="message-content">
+            <div class="message-header">
+              <span class="sender-name">{{message.userName}}</span>
+              <span class="message-time">{{formatTime(message.timestamp)}}</span>
+            </div>
+            <div class="message-text">{{message.content}}</div>
+          </div>
+        </div>
+
+        <!-- 自己的消息 -->
+        <div *ngIf="isOwnMessage(message)" class="message-container own">
+          <div class="message-content">
+            <div class="message-header">
+              <span class="message-time">{{formatTime(message.timestamp)}}</span>
+            </div>
+            <div class="message-text">{{message.content}}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 空状态 -->
+    <div class="empty-messages" *ngIf="!isLoadingHistory && messages.length === 0">
+      <mat-icon class="empty-icon">chat_bubble_outline</mat-icon>
+      <p>还没有消息</p>
+      <p class="empty-subtitle">发送第一条消息开始聊天</p>
+    </div>
+  </div>
+
+  <!-- 消息输入区域 -->
+  <div class="chat-input">
+    <form [formGroup]="messageForm" (ngSubmit)="sendMessage()" class="input-form">
+      <mat-form-field class="message-field" appearance="outline">
+        <input
+          matInput
+          formControlName="content"
+          placeholder="输入消息..."
+          (keydown)="onEnterKey($event)"
+          [disabled]="isSending"
+          autocomplete="off">
+
+        <button
+          mat-icon-button
+          matSuffix
+          type="submit"
+          [disabled]="messageForm.invalid || isSending"
+          matTooltip="发送消息">
+          <mat-icon *ngIf="!isSending">send</mat-icon>
+          <mat-spinner *ngIf="isSending" diameter="20"></mat-spinner>
+        </button>
+      </mat-form-field>
+    </form>
+
+    <!-- 快捷回复 -->
+    <div class="quick-replies" *ngIf="quickReplies.length > 0 && !showQuickReplies">
+      <button
+        mat-button
+        class="toggle-quick-replies"
+        (click)="showQuickReplies = !showQuickReplies">
+        <mat-icon>sentiment_satisfied</mat-icon>
+        快捷回复
+      </button>
+    </div>
+
+    <div class="quick-replies-list" *ngIf="showQuickReplies">
+      <div class="quick-reply-header">
+        <span>快捷回复</span>
+        <button mat-icon-button (click)="showQuickReplies = false">
+          <mat-icon>keyboard_arrow_down</mat-icon>
+        </button>
+      </div>
+
+      <div class="quick-reply-buttons">
+        <button
+          *ngFor="let reply of quickReplies"
+          mat-stroked-button
+          class="quick-reply-btn"
+          (click)="sendQuickReply(reply)">
+          {{reply}}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

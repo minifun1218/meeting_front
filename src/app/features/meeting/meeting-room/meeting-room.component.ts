@@ -43,772 +43,8 @@ import { MobileCompatibilityDialogComponent, MobileCompatibilityData } from '../
     ChatPanelComponent,
     VideoGridComponent
   ],
-  template: `
-    <div class="meeting-room-container full-height">
-      <!-- 顶部工具栏 -->
-      <mat-toolbar class="meeting-toolbar">
-        <div class="toolbar-content">
-          <div class="meeting-info">
-            <h3>{{roomName}}</h3>
-            <span class="participant-count">{{participants.length}} 人参与</span>
-          </div>
-
-          <div class="toolbar-actions">
-            <!-- 录制指示器 -->
-            <div *ngIf="isRecording" class="recording-indicator">
-              <div class="recording-dot"></div>
-              <span>录制中 {{formatRecordingTime()}}</span>
-            </div>
-
-            <!-- 侧边栏切换按钮 -->
-            <button mat-icon-button
-                    (click)="toggleParticipants()"
-                    matTooltip="参与者列表">
-              <mat-icon [matBadge]="participants.length"
-                        matBadgeColor="primary"
-                        matBadgeSize="small">
-                people
-              </mat-icon>
-            </button>
-
-            <button mat-icon-button
-                    (click)="toggleChat()"
-                    matTooltip="聊天">
-              <mat-icon [matBadge]="unreadCount > 0 ? unreadCount : null"
-                        matBadgeColor="warn"
-                        matBadgeSize="small">
-                chat
-              </mat-icon>
-            </button>
-
-            <button mat-icon-button
-                    (click)="leaveRoom()"
-                    matTooltip="离开会议"
-                    class="leave-button">
-              <mat-icon>exit_to_app</mat-icon>
-            </button>
-          </div>
-        </div>
-      </mat-toolbar>
-
-      <!-- 主要会议区域 -->
-      <div class="meeting-content">
-        <mat-sidenav-container class="sidenav-container">
-          <!-- 参与者列表侧边栏 -->
-          <mat-sidenav #participantsSidenav
-                       mode="side"
-                       position="start"
-                       [opened]="showParticipants"
-                       class="participants-sidenav">
-            <app-participants-list
-              [participants]="participants"
-              [currentUserId]="currentUser?.id || ''">
-            </app-participants-list>
-          </mat-sidenav>
-
-          <!-- 聊天侧边栏 -->
-          <mat-sidenav #chatSidenav
-                       mode="side"
-                       position="end"
-                       [opened]="showChat"
-                       class="chat-sidenav">
-            <app-chat-panel
-              [roomName]="roomName"
-              (onClose)="toggleChat()">
-            </app-chat-panel>
-          </mat-sidenav>
-
-          <!-- 视频网格区域 -->
-          <mat-sidenav-content class="video-content">
-            <!-- 录制状态指示器 -->
-            <div *ngIf="isRecording" class="recording-indicator">
-              <div class="recording-dot"></div>
-              <span class="recording-text">正在录制</span>
-              <span class="recording-time">{{ formatRecordingTime() }}</span>
-            </div>
-
-            <app-video-grid
-              [participants]="participants"
-              [localParticipant]="localParticipant">
-            </app-video-grid>
-
-            <!-- 底部控制栏 -->
-            <div class="meeting-controls">
-              <div class="controls-group">
-                <!-- 音频控制 -->
-                <button mat-fab
-                        [color]="isAudioEnabled ? 'primary' : 'warn'"
-                        (click)="toggleAudio()"
-                        matTooltip="{{isAudioEnabled ? '静音' : '取消静音'}}">
-                  <mat-icon>{{isAudioEnabled ? 'mic' : 'mic_off'}}</mat-icon>
-                </button>
-
-                <!-- 视频控制 -->
-                <button mat-fab
-                        [color]="isVideoEnabled ? 'primary' : 'warn'"
-                        (click)="toggleVideo()"
-                        matTooltip="{{isVideoEnabled ? '关闭摄像头' : '开启摄像头'}}">
-                  <mat-icon>{{isVideoEnabled ? 'videocam' : 'videocam_off'}}</mat-icon>
-                </button>
-
-                <!-- 摄像头诊断 -->
-                <button mat-fab
-                        color="accent"
-                        (click)="diagnoseCameraAndShowHelp()"
-                        matTooltip="摄像头诊断">
-                  <mat-icon>camera_enhance</mat-icon>
-                </button>
-
-                <!-- 屏幕共享 -->
-                <button mat-fab
-                        [color]="isScreenSharing ? 'accent' : 'primary'"
-                        (click)="toggleScreenShare()"
-                        matTooltip="{{isScreenSharing ? '停止共享' : '共享屏幕'}}">
-                  <mat-icon>{{isScreenSharing ? 'stop_screen_share' : 'screen_share'}}</mat-icon>
-                </button>
-
-                <!-- 录制控制 -->
-                <button mat-fab
-                        *ngIf="canRecord"
-                        [color]="isRecording ? 'warn' : 'primary'"
-                        (click)="toggleRecording()"
-                        matTooltip="{{isRecording ? '停止录制' : '开始录制'}}">
-                  <mat-icon>{{isRecording ? 'stop' : 'fiber_manual_record'}}</mat-icon>
-                </button>
-
-                <!-- 截图 -->
-                <button mat-fab
-                        color="primary"
-                        (click)="takeScreenshot()"
-                        matTooltip="截图">
-                  <mat-icon>camera_alt</mat-icon>
-                </button>
-
-                <!-- 邀请 -->
-                <button mat-fab
-                        color="primary"
-                        (click)="openInviteDialog()"
-                        matTooltip="邀请参与者">
-                  <mat-icon>person_add</mat-icon>
-                </button>
-
-                <!-- 离开会议 -->
-                <button mat-fab
-                        color="warn"
-                        (click)="leaveRoom()"
-                        matTooltip="离开会议"
-                        class="leave-fab">
-                  <mat-icon>call_end</mat-icon>
-                </button>
-              </div>
-            </div>
-          </mat-sidenav-content>
-        </mat-sidenav-container>
-      </div>
-
-      <!-- 移动端侧边栏切换按钮 -->
-      <button *ngIf="isMobile"
-              mat-fab
-              class="mobile-sidebar-toggle participants-toggle"
-              (click)="toggleParticipants()">
-        <mat-icon [matBadge]="participants.length"
-                  matBadgeColor="primary"
-                  matBadgeSize="small">
-          people
-        </mat-icon>
-      </button>
-
-      <button *ngIf="isMobile"
-              mat-fab
-              class="mobile-sidebar-toggle chat-toggle"
-              (click)="toggleChat()">
-        <mat-icon [matBadge]="unreadCount > 0 ? unreadCount : null"
-                  matBadgeColor="warn"
-                  matBadgeSize="small">
-          chat
-        </mat-icon>
-      </button>
-    </div>
-  `,
-  styles: [`
-    .meeting-room-container {
-      background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
-      color: white;
-      overflow: hidden;
-      position: relative;
-    }
-
-    .meeting-room-container::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.3) 0%, transparent 50%),
-                  radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.15) 0%, transparent 50%),
-                  radial-gradient(circle at 40% 40%, rgba(120, 219, 255, 0.1) 0%, transparent 50%);
-      pointer-events: none;
-      z-index: 0;
-    }
-
-    .meeting-toolbar {
-      background: rgba(15, 15, 35, 0.95);
-      backdrop-filter: blur(20px);
-      color: white;
-      border-bottom: 1px solid rgba(120, 119, 198, 0.2);
-      box-shadow: 0 4px 32px rgba(0, 0, 0, 0.3);
-      z-index: 10;
-      position: relative;
-    }
-
-    .toolbar-content {
-      width: 100%;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      position: relative;
-      z-index: 1;
-    }
-
-    .meeting-info h3 {
-      margin: 0;
-      font-size: 18px;
-      font-weight: 600;
-      background: linear-gradient(135deg, #ffffff 0%, #e3f2fd 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .participant-count {
-      font-size: 14px;
-      color: rgba(255, 255, 255, 0.8);
-      margin-left: 8px;
-      background: rgba(120, 119, 198, 0.2);
-      padding: 4px 12px;
-      border-radius: 16px;
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(120, 119, 198, 0.3);
-    }
-
-    .toolbar-actions {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .toolbar-actions button {
-      background: rgba(255, 255, 255, 0.1) !important;
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .toolbar-actions button:hover {
-      background: rgba(120, 119, 198, 0.3) !important;
-      border-color: rgba(120, 119, 198, 0.5);
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(120, 119, 198, 0.3);
-    }
-
-    .recording-indicator {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: linear-gradient(135deg, #ff4757 0%, #ff3742 100%);
-      padding: 6px 16px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 600;
-      box-shadow: 0 4px 20px rgba(255, 71, 87, 0.4);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      animation: recording-glow 2s ease-in-out infinite;
-    }
-
-    .recording-dot {
-      width: 8px;
-      height: 8px;
-      background: white;
-      border-radius: 50%;
-      animation: recording-pulse 1.5s ease-in-out infinite;
-    }
-
-    @keyframes recording-glow {
-      0%, 100% {
-        box-shadow: 0 4px 20px rgba(255, 71, 87, 0.4);
-      }
-      50% {
-        box-shadow: 0 4px 30px rgba(255, 71, 87, 0.7);
-      }
-    }
-
-    @keyframes recording-pulse {
-      0%, 100% {
-        opacity: 1;
-        transform: scale(1);
-      }
-      50% {
-        opacity: 0.6;
-        transform: scale(1.2);
-      }
-    }
-
-    .leave-button {
-      color: #ff4757 !important;
-      background: rgba(255, 71, 87, 0.1) !important;
-    }
-
-    .leave-button:hover {
-      background: rgba(255, 71, 87, 0.2) !important;
-      box-shadow: 0 8px 25px rgba(255, 71, 87, 0.3);
-    }
-
-    .meeting-content {
-      flex: 1;
-      height: calc(100vh - 68px); /* 减去工具栏高度 */
-      min-height: calc(100vh - 68px);
-      overflow: hidden;
-      position: relative;
-      z-index: 1;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .sidenav-container {
-      height: 100%;
-      min-height: calc(100vh - 68px); /* 减去工具栏高度 */
-      background: transparent;
-      display: flex;
-      flex: 1;
-    }
-
-    .participants-sidenav, .chat-sidenav {
-      width: 320px;
-      background: rgba(15, 15, 35, 0.95);
-      backdrop-filter: blur(20px);
-      border: none;
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    }
-
-    .participants-sidenav {
-      border-right: 1px solid rgba(120, 119, 198, 0.2);
-    }
-
-    .chat-sidenav {
-      border-left: 1px solid rgba(120, 119, 198, 0.2);
-    }
-
-    .video-content {
-      position: relative;
-      height: 100vh; /* 设置视频网格占据页面100%高度 */
-      background: rgba(120, 119, 198, 0.2);;
-      backdrop-filter: blur(10px);
-      display: flex;
-      flex-direction: column;
-      overflow: hidden;
-      min-height: 100vh; /* 最小高度也设为100vh */
-      z-index: 1;
-      border-radius: 0;
-      flex: 1;
-    }
-
-    .meeting-controls {
-      position: fixed;
-      bottom: 32px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 1000;
-      pointer-events: none;
-    }
-
-    .controls-group {
-      display: flex;
-      gap: 20px;
-      align-items: center;
-      background: rgba(15, 15, 35, 0.95);
-      backdrop-filter: blur(25px);
-      padding: 20px 32px;
-      border-radius: 50px;
-      border: 1px solid rgba(120, 119, 198, 0.3);
-      box-shadow: 0 8px 40px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.05);
-      pointer-events: auto;
-      position: relative;
-    }
-
-    .controls-group::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(135deg, rgba(120, 119, 198, 0.1) 0%, rgba(255, 119, 198, 0.05) 100%);
-      border-radius: 50px;
-      pointer-events: none;
-    }
-
-    .controls-group button {
-      width: 60px;
-      height: 60px;
-      position: relative;
-      z-index: 1;
-      background: rgba(255, 255, 255, 0.1) !important;
-      backdrop-filter: blur(10px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .controls-group button:hover {
-      transform: translateY(-3px) scale(1.05);
-      box-shadow: 0 12px 30px rgba(120, 119, 198, 0.4);
-      background: rgba(120, 119, 198, 0.3) !important;
-      border-color: rgba(120, 119, 198, 0.5);
-    }
-
-    .controls-group button[color="primary"] {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
-      border-color: rgba(102, 126, 234, 0.5);
-    }
-
-    .controls-group button[color="warn"] {
-      background: linear-gradient(135deg, #ff4757 0%, #ff3742 100%) !important;
-      border-color: rgba(255, 71, 87, 0.5);
-    }
-
-    .controls-group button[color="accent"] {
-      background: linear-gradient(135deg, #ff9800 0%, #f57c00 100%) !important;
-      border-color: rgba(255, 152, 0, 0.5);
-    }
-
-    .leave-fab {
-      background: linear-gradient(135deg, #ff4757 0%, #ff3742 100%) !important;
-      border-color: rgba(255, 71, 87, 0.5) !important;
-    }
-
-    .leave-fab:hover {
-      box-shadow: 0 12px 30px rgba(255, 71, 87, 0.5) !important;
-    }
-
-    .mobile-sidebar-toggle {
-      position: fixed;
-      z-index: 1000;
-    }
-
-    .participants-toggle {
-      top: 50%;
-      left: 16px;
-      transform: translateY(-50%);
-    }
-
-    .chat-toggle {
-      top: 50%;
-      right: 16px;
-      transform: translateY(-50%);
-    }
-
-    /* 录制状态指示器 */
-    .video-content .recording-indicator {
-      position: absolute;
-      top: 20px;
-      left: 20px;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      background: rgba(244, 67, 54, 0.9);
-      color: white;
-      padding: 8px 16px;
-      border-radius: 20px;
-      font-size: 14px;
-      font-weight: 500;
-      z-index: 1000;
-      backdrop-filter: blur(4px);
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-    }
-
-    .video-content .recording-dot {
-      width: 8px;
-      height: 8px;
-      background: #fff;
-      border-radius: 50%;
-      animation: recording-pulse 1.5s ease-in-out infinite;
-    }
-
-    @keyframes recording-pulse {
-      0%, 100% {
-        opacity: 1;
-        transform: scale(1);
-      }
-      50% {
-        opacity: 0.5;
-        transform: scale(1.2);
-      }
-    }
-
-    .video-content .recording-text {
-      font-weight: 600;
-      letter-spacing: 0.5px;
-    }
-
-    .video-content .recording-time {
-      font-family: 'Courier New', monospace;
-      font-size: 13px;
-      opacity: 0.9;
-    }
-
-    /* 响应式设计 */
-    /* 4K分辨率优化 (3840x2160及以上) */
-    @media (min-width: 3840px) {
-      .meeting-toolbar {
-        height: 80px;
-        padding: 0 32px;
-      }
-
-      .meeting-content {
-        height: calc(100vh - 80px);
-        min-height: calc(100vh - 80px);
-      }
-
-      .video-content {
-        height: 100vh;
-        min-height: 100vh;
-      }
-
-      .meeting-info h3 {
-        font-size: 28px;
-      }
-
-      .participant-count {
-        font-size: 18px;
-      }
-
-      .participants-sidenav, .chat-sidenav {
-        width: 480px;
-      }
-
-      .controls-group {
-        padding: 24px 48px;
-        gap: 24px;
-        border-radius: 60px;
-      }
-
-      .controls-group button {
-        width: 80px;
-        height: 80px;
-      }
-
-      .meeting-controls {
-        bottom: 40px;
-      }
-
-      .video-content .recording-indicator {
-        top: 32px;
-        left: 32px;
-        padding: 16px 24px;
-        font-size: 18px;
-        border-radius: 30px;
-      }
-
-      .video-content .recording-time {
-        font-size: 16px;
-      }
-
-      .mobile-sidebar-toggle {
-        width: 80px;
-        height: 80px;
-      }
-    }
-
-    /* 2K分辨率优化 (2560x1440) */
-    @media (min-width: 2560px) and (max-width: 3839px) {
-      .meeting-toolbar {
-        height: 72px;
-        padding: 0 24px;
-      }
-
-      .meeting-content {
-        height: calc(100vh - 72px);
-        min-height: calc(100vh - 72px);
-      }
-
-      .sidenav-container {
-        min-height: calc(100vh - 72px);
-      }
-
-      .video-content {
-        height: 100vh;
-        min-height: 100vh;
-      }
-
-      .meeting-info h3 {
-        font-size: 24px;
-      }
-
-      .participant-count {
-        font-size: 16px;
-      }
-
-      .participants-sidenav, .chat-sidenav {
-        width: 400px;
-      }
-
-      .controls-group {
-        padding: 20px 36px;
-        gap: 20px;
-        border-radius: 50px;
-      }
-
-      .controls-group button {
-        width: 68px;
-        height: 68px;
-      }
-
-      .meeting-controls {
-        bottom: 32px;
-      }
-
-      .video-content .recording-indicator {
-        top: 24px;
-        left: 24px;
-        padding: 12px 20px;
-        font-size: 16px;
-        border-radius: 25px;
-      }
-
-      .video-content .recording-time {
-        font-size: 14px;
-      }
-
-      .mobile-sidebar-toggle {
-        width: 68px;
-        height: 68px;
-      }
-    }
-
-    /* 1K分辨率优化 (1920x1080) */
-    @media (min-width: 1920px) and (max-width: 2559px) {
-      .meeting-toolbar {
-        height: 68px;
-        padding: 0 20px;
-      }
-
-      .meeting-info h3 {
-        font-size: 20px;
-      }
-
-      .participant-count {
-        font-size: 15px;
-      }
-
-      .participants-sidenav, .chat-sidenav {
-        width: 350px;
-      }
-
-      .controls-group {
-        padding: 18px 30px;
-        gap: 18px;
-        border-radius: 45px;
-      }
-
-      .controls-group button {
-        width: 60px;
-        height: 60px;
-      }
-
-      .meeting-controls {
-        bottom: 28px;
-      }
-
-      .video-content .recording-indicator {
-        top: 22px;
-        left: 22px;
-        padding: 10px 18px;
-        font-size: 15px;
-        border-radius: 22px;
-      }
-
-      .video-content .recording-time {
-        font-size: 13px;
-      }
-
-      .mobile-sidebar-toggle {
-        width: 60px;
-        height: 60px;
-      }
-    }
-
-    /* 标准桌面分辨率优化 (1366x768 - 1919x1079) */
-    @media (min-width: 1025px) and (max-width: 1919px) {
-      .participants-sidenav, .chat-sidenav {
-        width: 320px;
-      }
-    }
-
-    /* 平板分辨率优化 */
-    @media (max-width: 1024px) {
-      .participants-sidenav, .chat-sidenav {
-        width: 280px;
-      }
-    }
-
-    /* 移动端分辨率优化 */
-    @media (max-width: 768px) {
-      .meeting-toolbar {
-        padding: 0 8px;
-      }
-
-      .toolbar-content {
-        font-size: 14px;
-      }
-
-      .meeting-info h3 {
-        font-size: 16px;
-      }
-
-      .toolbar-actions {
-        gap: 4px;
-      }
-
-      .participants-sidenav, .chat-sidenav {
-        position: fixed;
-        top: 0;
-        bottom: 0;
-        width: 100vw;
-        z-index: 2000;
-      }
-
-      .controls-group {
-        padding: 12px 16px;
-        gap: 12px;
-      }
-
-      .controls-group button {
-        width: 48px;
-        height: 48px;
-      }
-
-      .meeting-controls {
-        bottom: 16px;
-      }
-
-      .video-content .recording-indicator {
-        top: 10px;
-        left: 10px;
-        padding: 6px 12px;
-        font-size: 12px;
-      }
-
-      .video-content .recording-time {
-        font-size: 11px;
-      }
-    }
-
-    @keyframes pulse {
-      0% { opacity: 1; }
-      50% { opacity: 0.7; }
-      100% { opacity: 1; }
-    }
-  `]
+  templateUrl: './meeting-room.component.html',
+  styleUrls: ['./meeting-room.component.scss']
 })
 export class MeetingRoomComponent implements OnInit, OnDestroy {
 
@@ -1253,32 +489,24 @@ export class MeetingRoomComponent implements OnInit, OnDestroy {
       // 调用LiveKit服务切换视频状态，并等待结果
       const newState = await this.liveKitService.toggleVideo();
 
-      // 检查返回的状态
-      if (newState !== false) {
-        // 状态正常，更新组件状态并同步UI
-        this.isVideoEnabled = newState;
-        this.cdr.detectChanges(); // 手动触发变更检测以更新视图
+      // 更新组件状态并同步UI
+      this.isVideoEnabled = newState;
+      this.cdr.detectChanges();
 
-        // 显示操作成功提示
-        this.snackBar.open(
-          newState ? '摄像头已开启' : '摄像头已关闭',
-          '确定',
-          { duration: 2000 } // 提示显示2秒
-        );
-      } else {
-        // 当返回false时，表示摄像头操作失败或不可用
-        // 确保状态设置为关闭并进行摄像头诊断
-        this.isVideoEnabled = false;
-        this.cdr.detectChanges(); // 更新UI状态
-        await this.diagnoseCameraAndShowHelp(); // 进行摄像头问题诊断并显示帮助
-      }
+      // 显示操作成功提示
+      this.snackBar.open(
+        newState ? '摄像头已开启' : '摄像头已关闭',
+        '确定',
+        { duration: 2000 }
+      );
     } catch (error) {
       // 捕获并记录错误
       console.error('切换视频失败:', error);
       // 发生错误时，确保状态设置为关闭
       this.isVideoEnabled = false;
-      this.cdr.detectChanges(); // 更新UI状态
-      await this.diagnoseCameraAndShowHelp(); // 进行摄像头问题诊断并显示帮助
+      this.cdr.detectChanges();
+      // 只有在发生错误时才进行摄像头诊断
+      await this.diagnoseCameraAndShowHelp();
     }
   }
 
@@ -1395,41 +623,104 @@ export class MeetingRoomComponent implements OnInit, OnDestroy {
   /**
    * 开始录制
    */
-  private startRecording(): void {
+  private async startRecording(): Promise<void> {
+    if (!this.currentUser?.id) {
+      this.snackBar.open('无法识别当前用户，无法开始录制', '确定', { duration: 3000 });
+      return;
+    }
+
+    // 检查音视频轨道状态
+    const localParticipant = this.liveKitService.getLocalParticipant();
+    if (!localParticipant) {
+      this.snackBar.open('未连接到会议，无法开始录制', '确定', { duration: 3000 });
+      return;
+    }
+
+    const hasVideo = localParticipant.isCameraEnabled;
+    const hasAudio = localParticipant.isMicrophoneEnabled;
+
+    // 构建确认消息
+    let confirmMessage = '确定要开始录制会议吗？录制文件将保存到您的账户中。\n\n';
+
+    if (!hasVideo && !hasAudio) {
+      confirmMessage += '⚠️ 检测到您的摄像头和麦克风都已关闭。\n录制需要至少一个音视频源，系统将自动为您启用摄像头和麦克风。';
+    } else if (!hasVideo) {
+      confirmMessage += '⚠️ 检测到您的摄像头已关闭。\n为确保录制质量，系统将自动为您启用摄像头。';
+    } else if (!hasAudio) {
+      confirmMessage += '⚠️ 检测到您的麦克风已关闭。\n为确保录制质量，系统将自动为您启用麦克风。';
+    }
+
     // 显示确认对话框
-    const confirmMessage = '确定要开始录制会议吗？录制文件将保存到您的账户中。';
     if (!confirm(confirmMessage)) {
       return;
     }
 
-    this.snackBar.open('正在开始录制...', '', { duration: 2000 });
+    try {
+      // 强制启用音视频（如果未启用）
+      if (!hasVideo || !hasAudio) {
+        this.snackBar.open('正在启用音视频设备...', '', { duration: 2000 });
 
-    this.recordingService.startRecording(this.roomName).subscribe({
-      next: (response) => {
-        console.log('录制开始成功:', response);
-        this.snackBar.open('🔴 录制已开始', '确定', { duration: 3000 });
-
-        // 通知其他参与者录制已开始
-        this.chatService.sendSystemMessage(this.roomName, '会议录制已开始').subscribe({
-          next: () => console.log('录制开始通知发送成功'),
-          error: (error) => console.error('录制开始通知失败:', error)
-        });
-      },
-      error: (error) => {
-        console.error('开始录制失败:', error);
-        let errorMessage = '开始录制失败';
-
-        if (error.status === 403) {
-          errorMessage = '您没有录制权限';
-        } else if (error.status === 409) {
-          errorMessage = '会议已在录制中';
-        } else if (error.status === 500) {
-          errorMessage = '服务器错误，请稍后重试';
+        if (!hasVideo) {
+          console.log('启用摄像头以进行录制...');
+          await this.liveKitService.toggleCamera(true);
+          this.isVideoEnabled = true;
         }
 
-        this.snackBar.open(errorMessage, '确定', { duration: 3000 });
+        if (!hasAudio) {
+          console.log('启用麦克风以进行录制...');
+          await this.liveKitService.toggleMicrophone(true);
+          this.isAudioEnabled = true;
+        }
+
+        // 等待轨道发布完成
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        console.log('音视频设备启用完成，准备开始录制');
       }
-    });
+
+      this.snackBar.open('正在开始录制...', '', { duration: 2000 });
+
+      // 生成录制名称
+      const recordingName = `${this.roomName}_${new Date().toISOString().replace(/[:.]/g, '-')}`;
+      const userId = this.currentUser.id;
+      const format = 'mp4';
+      const quality = 'high';
+
+      this.recordingService.startRecording(
+        this.roomName,
+        userId,
+        recordingName,
+        format,
+        quality
+      ).subscribe({
+        next: (response) => {
+          console.log('录制开始成功:', response);
+          this.snackBar.open('🔴 录制已开始', '确定', { duration: 3000 });
+
+          // 通知其他参与者录制已开始
+          this.chatService.sendSystemMessage(this.roomName, '会议录制已开始').subscribe({
+            next: () => console.log('录制开始通知发送成功'),
+            error: (error) => console.error('录制开始通知失败:', error)
+          });
+        },
+        error: (error) => {
+          console.error('开始录制失败:', error);
+          let errorMessage = '开始录制失败';
+
+          if (error.status === 403) {
+            errorMessage = '您没有录制权限';
+          } else if (error.status === 409) {
+            errorMessage = '会议已在录制中';
+          } else if (error.status === 500) {
+            errorMessage = '服务器错误，请稍后重试';
+          }
+
+          this.snackBar.open(errorMessage, '确定', { duration: 3000 });
+        }
+      });
+    } catch (error) {
+      console.error('启用音视频设备失败:', error);
+      this.snackBar.open('启用音视频设备失败，无法开始录制', '确定', { duration: 3000 });
+    }
   }
 
   /**
@@ -1493,6 +784,56 @@ export class MeetingRoomComponent implements OnInit, OnDestroy {
   }
 
   /**
+   * 删除房间（仅创建者可删除）
+   */
+  deleteRoom(): void {
+    // 检查是否是房间创建者
+    if (!this.isRoomCreator()) {
+      this.snackBar.open('只有房间创建者可以删除房间', '确定', { duration: 3000 });
+      return;
+    }
+
+    // 显示确认对话框
+    const confirmMessage = `确定要删除房间 "${this.roomName}" 吗？此操作不可撤销，所有参与者将被移除。`;
+    if (!confirm(confirmMessage)) {
+      return;
+    }
+
+    this.snackBar.open('正在删除房间...', '', { duration: 2000 });
+
+    this.meetingService.deleteRoom(this.roomName).subscribe({
+      next: (response) => {
+        this.snackBar.open('房间已删除', '确定', { duration: 3000 });
+        // 断开连接并返回首页
+        this.liveKitService.disconnect();
+        this.router.navigate(['/home']);
+      },
+      error: (error) => {
+        console.error('删除房间失败:', error);
+        let errorMessage = '删除房间失败';
+
+        if (error.status === 403) {
+          errorMessage = '您没有权限删除此房间';
+        } else if (error.status === 404) {
+          errorMessage = '房间不存在';
+        } else if (error.status === 500) {
+          errorMessage = '服务器错误，请稍后重试';
+        }
+
+        this.snackBar.open(errorMessage, '确定', { duration: 3000 });
+      }
+    });
+  }
+
+  /**
+   * 检查当前用户是否是房间创建者
+   */
+  private isRoomCreator(): boolean {
+    return this.currentUser?.role === UserRole.ADMIN ||
+           this.currentUser?.role === UserRole.HOST;
+  }
+
+  /**
    * 打开邀请对话框
    */
   openInviteDialog(): void {
@@ -1513,15 +854,11 @@ export class MeetingRoomComponent implements OnInit, OnDestroy {
 
   toggleParticipants(): void {
     this.showParticipants = !this.showParticipants;
-    if (this.showParticipants && this.showChat) {
-      this.showChat = false;
-    }
   }
 
   toggleChat(): void {
     this.showChat = !this.showChat;
     if (this.showChat) {
-      this.showParticipants = false;
       this.chatService.markAsRead();
     }
   }

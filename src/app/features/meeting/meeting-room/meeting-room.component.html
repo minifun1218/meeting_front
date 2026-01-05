@@ -1,0 +1,195 @@
+<div class="meeting-room-container">
+  <!-- 顶部工具栏 -->
+  <mat-toolbar class="meeting-toolbar">
+    <div class="meeting-info">
+      <h3>{{roomName}}</h3>
+      <span class="participant-count">{{participants.length}} 人参与</span>
+      <!-- 录制指示器 -->
+      <div *ngIf="isRecording" class="recording-indicator">
+        <div class="recording-dot"></div>
+        <span>录制中 {{formatRecordingTime()}}</span>
+      </div>
+    </div>
+
+    <div class="toolbar-spacer"></div>
+
+    <div class="toolbar-actions">
+      <button
+        mat-icon-button
+        (click)="toggleParticipants()"
+        matTooltip="参与者列表">
+        <mat-icon
+          [matBadge]="participants.length"
+          matBadgeColor="primary"
+          matBadgeSize="small">
+          people
+        </mat-icon>
+      </button>
+
+      <button
+        mat-icon-button
+        (click)="toggleChat()"
+        matTooltip="聊天">
+        <mat-icon
+          [matBadge]="unreadCount > 0 ? unreadCount : null"
+          matBadgeColor="warn"
+          matBadgeSize="small">
+          chat
+        </mat-icon>
+      </button>
+
+      <button
+        mat-icon-button
+        *ngIf="canRecord"
+        (click)="deleteRoom()"
+        matTooltip="删除房间"
+        class="delete-button">
+        <mat-icon>delete</mat-icon>
+      </button>
+
+      <button
+        mat-icon-button
+        (click)="leaveRoom()"
+        matTooltip="离开会议"
+        class="leave-button">
+        <mat-icon>exit_to_app</mat-icon>
+      </button>
+    </div>
+  </mat-toolbar>
+
+  <!-- 主要内容区域 -->
+  <div class="meeting-content">
+    <mat-sidenav-container class="sidenav-container">
+      <!-- 参与者列表侧边栏 -->
+      <mat-sidenav
+        #participantsSidenav
+        mode="side"
+        position="start"
+        [opened]="showParticipants"
+        class="participants-sidenav">
+        <app-participants-list
+          [participants]="participants"
+          [currentUserId]="currentUser?.id || ''">
+        </app-participants-list>
+      </mat-sidenav>
+
+      <!-- 聊天侧边栏 -->
+      <mat-sidenav
+        #chatSidenav
+        mode="side"
+        position="end"
+        [opened]="showChat"
+        class="chat-sidenav">
+        <app-chat-panel
+          [roomName]="roomName"
+          (onClose)="toggleChat()">
+        </app-chat-panel>
+      </mat-sidenav>
+
+      <!-- 视频区域 -->
+      <mat-sidenav-content class="video-content">
+        <app-video-grid
+          [participants]="participants"
+          [localParticipant]="localParticipant">
+        </app-video-grid>
+
+        <!-- 底部控制栏 -->
+        <div class="meeting-controls">
+          <div class="controls-group">
+            <!-- 音频控制 -->
+            <button
+              mat-fab
+              [color]="isAudioEnabled ? 'primary' : 'warn'"
+              (click)="toggleAudio()"
+              matTooltip="{{isAudioEnabled ? '静音' : '取消静音'}}">
+              <mat-icon>{{isAudioEnabled ? 'mic' : 'mic_off'}}</mat-icon>
+            </button>
+
+            <!-- 视频控制 -->
+            <button
+              mat-fab
+              [color]="isVideoEnabled ? 'primary' : 'warn'"
+              (click)="toggleVideo()"
+              matTooltip="{{isVideoEnabled ? '关闭摄像头' : '开启摄像头'}}">
+              <mat-icon>{{isVideoEnabled ? 'videocam' : 'videocam_off'}}</mat-icon>
+            </button>
+
+            <!-- 屏幕共享 -->
+            <button
+              mat-fab
+              [color]="isScreenSharing ? 'accent' : 'primary'"
+              (click)="toggleScreenShare()"
+              matTooltip="{{isScreenSharing ? '停止共享' : '共享屏幕'}}">
+              <mat-icon>{{isScreenSharing ? 'stop_screen_share' : 'screen_share'}}</mat-icon>
+            </button>
+
+            <!-- 录制控制 -->
+            <button
+              mat-fab
+              *ngIf="canRecord"
+              [color]="isRecording ? 'warn' : 'primary'"
+              (click)="toggleRecording()"
+              matTooltip="{{isRecording ? '停止录制' : '开始录制'}}">
+              <mat-icon>{{isRecording ? 'stop' : 'fiber_manual_record'}}</mat-icon>
+            </button>
+
+            <!-- 截图 -->
+            <button
+              mat-fab
+              color="primary"
+              (click)="takeScreenshot()"
+              matTooltip="截图">
+              <mat-icon>camera_alt</mat-icon>
+            </button>
+
+            <!-- 邀请 -->
+            <button
+              mat-fab
+              color="primary"
+              (click)="openInviteDialog()"
+              matTooltip="邀请参与者">
+              <mat-icon>person_add</mat-icon>
+            </button>
+
+            <!-- 离开会议 -->
+            <button
+              mat-fab
+              color="warn"
+              (click)="leaveRoom()"
+              matTooltip="离开会议"
+              class="leave-fab">
+              <mat-icon>call_end</mat-icon>
+            </button>
+          </div>
+        </div>
+      </mat-sidenav-content>
+    </mat-sidenav-container>
+  </div>
+
+  <!-- 移动端浮动按钮 -->
+  <button
+    *ngIf="isMobile"
+    mat-fab
+    class="mobile-fab participants-fab"
+    (click)="toggleParticipants()">
+    <mat-icon
+      [matBadge]="participants.length"
+      matBadgeColor="primary"
+      matBadgeSize="small">
+      people
+    </mat-icon>
+  </button>
+
+  <button
+    *ngIf="isMobile"
+    mat-fab
+    class="mobile-fab chat-fab"
+    (click)="toggleChat()">
+    <mat-icon
+      [matBadge]="unreadCount > 0 ? unreadCount : null"
+      matBadgeColor="warn"
+      matBadgeSize="small">
+      chat
+    </mat-icon>
+  </button>
+</div>

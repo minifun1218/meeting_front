@@ -1,0 +1,156 @@
+<div class="video-grid-container" [class.screen-share-mode]="screenShareMode">
+  <!-- 屏幕共享区域 -->
+  <div class="screen-share-area" *ngIf="screenShareMode && screenShareParticipant">
+    <div class="screen-share-video">
+      <video
+        #screenVideo
+        [id]="'screen-' + screenShareParticipant.identity"
+        autoplay
+        playsinline
+        muted="false"
+        class="screen-video-element">
+      </video>
+
+      <div class="screen-share-info">
+        <mat-icon>screen_share</mat-icon>
+        <span>{{ screenShareParticipant.name }} 正在共享屏幕</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 视频网格区域 -->
+  <div
+    class="video-grid"
+    [style.grid-template-columns]="gridLayout.columns + 'fr '.repeat(gridLayout.columns - 1) + 'fr'"
+    [style.grid-template-rows]="gridLayout.rows + 'fr '.repeat(gridLayout.rows - 1) + 'fr'"
+    [class.minimized]="screenShareMode">
+
+    <!-- 参与者视频卡片 -->
+    <div
+      class="participant-video"
+      *ngFor="let participantVideo of participantVideos; trackBy: trackByParticipant"
+      [class.local]="participantVideo.participant.isLocal"
+      [class.pinned]="participantVideo.isPinned"
+      [class.audio-only]="!participantVideo.participant.videoEnabled && !participantVideo.participant.screenShareEnabled">
+
+      <!-- 视频元素 -->
+      <video
+        #videoElement
+        [id]="'video-' + participantVideo.participant.identity"
+        autoplay
+        playsinline
+        [muted]="participantVideo.participant.isLocal"
+        class="video-element"
+        [style.display]="participantVideo.participant.videoEnabled ? 'block' : 'none'">
+      </video>
+
+      <!-- 音频元素（仅远程参与者） -->
+      <audio
+        #audioElement
+        *ngIf="!participantVideo.participant.isLocal"
+        [id]="'audio-' + participantVideo.participant.identity"
+        autoplay
+        playsinline>
+      </audio>
+
+      <!-- 参与者信息覆盖层 -->
+      <div class="participant-overlay">
+        <!-- 参与者名称 -->
+        <div class="participant-name">
+          <mat-icon *ngIf="participantVideo.participant.isLocal" class="local-indicator">
+            person
+          </mat-icon>
+          {{ participantVideo.participant.name }}
+          <span *ngIf="participantVideo.participant.isLocal" class="local-label">(我)</span>
+        </div>
+
+        <!-- 状态指示器 -->
+        <div class="status-indicators">
+          <mat-icon
+            *ngIf="!participantVideo.participant.audioEnabled"
+            class="status-icon muted"
+            matTooltip="麦克风已静音">
+            mic_off
+          </mat-icon>
+
+          <mat-icon
+            *ngIf="!participantVideo.participant.videoEnabled"
+            class="status-icon video-off"
+            matTooltip="摄像头已关闭">
+            videocam_off
+          </mat-icon>
+
+          <mat-icon
+            *ngIf="participantVideo.participant.screenShareEnabled"
+            class="status-icon screen-share"
+            matTooltip="正在共享屏幕">
+            screen_share
+          </mat-icon>
+        </div>
+
+        <!-- 参与者操作菜单 -->
+        <div class="participant-actions" *ngIf="!participantVideo.participant.isLocal">
+          <button
+            mat-icon-button
+            [matMenuTriggerFor]="participantMenu"
+            class="action-button"
+            matTooltip="更多操作">
+            <mat-icon>more_vert</mat-icon>
+          </button>
+
+          <mat-menu #participantMenu="matMenu">
+            <button mat-menu-item (click)="pinParticipant(participantVideo)">
+              <mat-icon>{{ participantVideo.isPinned ? 'push_pin' : 'push_pin' }}</mat-icon>
+              <span>{{ participantVideo.isPinned ? '取消置顶' : '置顶' }}</span>
+            </button>
+
+            <button mat-menu-item (click)="focusParticipant(participantVideo)">
+              <mat-icon>center_focus_strong</mat-icon>
+              <span>聚焦</span>
+            </button>
+          </mat-menu>
+        </div>
+      </div>
+
+      <!-- 无视频时的占位符 -->
+      <div
+        class="video-placeholder"
+        *ngIf="!participantVideo.participant.videoEnabled && !participantVideo.participant.screenShareEnabled">
+        <div class="avatar">
+          <mat-icon class="avatar-icon">person</mat-icon>
+        </div>
+        <div class="participant-name-large">
+          {{ participantVideo.participant.name }}
+        </div>
+      </div>
+
+      <!-- 连接状态指示器 -->
+      <div
+        class="connection-indicator"
+        *ngIf="getConnectionQuality(participantVideo.participant) !== 'excellent'">
+        <mat-icon [class]="'quality-' + getConnectionQuality(participantVideo.participant)">
+          {{ getConnectionQualityIcon(participantVideo.participant) }}
+        </mat-icon>
+      </div>
+    </div>
+  </div>
+
+  <!-- 网格布局控制 -->
+  <div class="grid-controls" *ngIf="!screenShareMode">
+    <button
+      mat-icon-button
+      (click)="toggleGridLayout()"
+      matTooltip="切换布局"
+      class="control-button">
+      <mat-icon>view_module</mat-icon>
+    </button>
+
+    <button
+      mat-icon-button
+      (click)="toggleFullscreen()"
+      matTooltip="全屏"
+      class="control-button">
+      <mat-icon>{{ isFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
+    </button>
+  </div>
+</div>
