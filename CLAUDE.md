@@ -53,6 +53,14 @@ npm run watch
 
 Continuously builds in development mode when files change.
 
+### Code Formatting
+The project uses Prettier for code formatting (configured in `package.json`):
+- Print width: 100 characters
+- Single quotes
+- Angular parser for HTML files
+
+Run `npx prettier --write .` to format files.
+
 ## Architecture Overview
 
 ### Application Structure
@@ -65,15 +73,17 @@ src/app/
 │   ├── guards/             # Route guards (auth.guard.ts)
 │   ├── interceptors/       # HTTP interceptors (auth, error handling)
 │   ├── models/             # TypeScript interfaces and types
-│   └── services/           # Core services (auth, meeting, chat, recording, livekit)
+│   ├── services/           # Core services (auth, meeting, chat, recording, livekit)
+│   └── utils/              # Utility functions (crypto.util.ts)
 ├── features/               # Feature modules (lazy-loaded)
-│   ├── auth/              # Authentication (login)
+│   ├── auth/              # Authentication (login, register)
 │   ├── home/              # Home dashboard
 │   ├── meeting/           # Meeting-related components
 │   │   ├── meeting-room/  # Main meeting room component
 │   │   ├── chat-panel/    # Chat sidebar
 │   │   ├── participants-list/  # Participants sidebar
-│   │   └── join/          # Join meeting flow
+│   │   ├── join/          # Join meeting flow
+│   │   └── responsive-test/  # Responsive layout testing
 │   └── recordings/        # Recording management
 ├── shared/                # Shared components and utilities
 ├── app.component.ts       # Root component
@@ -90,6 +100,7 @@ The application uses five main services that manage different aspects of the vid
 - Stores tokens in localStorage
 - Provides current user information
 - Token expiration checking
+- Works with `crypto.util.ts` for password encryption
 
 #### 2. MeetingService (`core/services/meeting.service.ts`)
 - Manages meeting room lifecycle (create, join, end)
@@ -151,7 +162,7 @@ The application connects to multiple microservices:
 - **Meeting Service**: `/api/meetings` (port 8082 in production)
 - **Chat Service**: `/api/chat` (port 8081 in production)
 - **Recording Service**: `/api/recordings` (port 8083 in production)
-- **LiveKit Server**: WebSocket connection (default: `ws://10.0.11.181:7880`)
+- **LiveKit Server**: WebSocket connection (configured in environments, default: `ws://10.0.81.216:7880`)
 
 Environment configuration is in `src/environments/environment.ts` (dev) and `environment.prod.ts` (prod).
 
@@ -211,7 +222,10 @@ When adding new code, prefer the shorter method names (`connect`, `disconnect`, 
 5. On token expiration, user redirected to login
 
 ### Proxy Configuration
-In development, the Angular dev server proxies API requests to avoid CORS issues. The proxy is configured in `proxy.conf.json` and enabled via `angular.json` (development configuration).
+In development, the Angular dev server proxies API requests to avoid CORS issues. The proxy is configured in `proxy.conf.json`:
+- All `/api/*` requests are proxied to `http://localhost:8080`
+- Enabled automatically in development configuration via `angular.json`
+- Logs proxy activity at "debug" level for troubleshooting
 
 ### Material Design + Bootstrap
 The app uses both Angular Material and Bootstrap 5:
@@ -230,11 +244,23 @@ The app requires WebRTC support. Use `LiveKitService.checkMobileBrowserCompatibi
 3. Import required standalone modules in component
 4. Add route guard if authentication required
 
+Example routes from `app.routes.ts`:
+- `/login` - Public login page
+- `/register` - Public registration page
+- `/home` - Protected home dashboard (requires auth)
+- `/meeting/:roomName` - Protected meeting room (requires auth)
+- `/recordings` - Protected recordings list (requires auth)
+- `/join` - Public join meeting flow
+- `/responsive-test` - Public responsive layout testing
+
 ### Adding a New Service
 1. Generate service: `ng generate service core/services/my-service`
 2. Service is automatically `providedIn: 'root'` (singleton)
 3. Inject HttpClient if needed for API calls
 4. Use BehaviorSubject/Subject for state management
+
+### Adding Utility Functions
+Utility functions should be placed in `src/app/core/utils/` (e.g., `crypto.util.ts` for encryption/decryption utilities using `crypto-js` and `jsencrypt`).
 
 ### Modifying API Endpoints
 Update the service URLs in `src/environments/environment.ts` and `environment.prod.ts`.

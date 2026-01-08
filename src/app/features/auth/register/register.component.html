@@ -1,0 +1,122 @@
+<div class="register-container">
+  <mat-card class="register-card">
+    <mat-card-header>
+      <mat-card-title>
+        <h1 class="title">用户注册</h1>
+        <p class="subtitle">创建您的智慧课堂账号</p>
+      </mat-card-title>
+    </mat-card-header>
+
+    <mat-card-content>
+      <form [formGroup]="registerForm" (ngSubmit)="onSubmit()">
+        <!-- 用户名 -->
+        <mat-form-field appearance="outline">
+          <mat-label>用户名</mat-label>
+          <input matInput
+                 formControlName="username"
+                 placeholder="请输入用户名（3-20位字母数字）"
+                 autocomplete="username">
+          <mat-icon matSuffix>person</mat-icon>
+          <mat-error *ngIf="registerForm.get('username')?.hasError('required')">
+            用户名不能为空
+          </mat-error>
+          <mat-error *ngIf="registerForm.get('username')?.hasError('minlength')">
+            用户名至少3位
+          </mat-error>
+          <mat-error *ngIf="registerForm.get('username')?.hasError('pattern')">
+            用户名只能包含字母、数字和下划线
+          </mat-error>
+        </mat-form-field>
+
+        <!-- 邮箱 -->
+        <mat-form-field appearance="outline">
+          <mat-label>邮箱</mat-label>
+          <input matInput
+                 type="email"
+                 formControlName="email"
+                 placeholder="请输入邮箱地址"
+                 autocomplete="email">
+          <mat-icon matSuffix>email</mat-icon>
+          <mat-error *ngIf="registerForm.get('email')?.hasError('required')">
+            邮箱不能为空
+          </mat-error>
+          <mat-error *ngIf="registerForm.get('email')?.hasError('email')">
+            请输入有效的邮箱地址
+          </mat-error>
+        </mat-form-field>
+
+        <!-- 显示名称 -->
+        <mat-form-field appearance="outline">
+          <mat-label>显示名称</mat-label>
+          <input matInput
+                 formControlName="displayName"
+                 placeholder="请输入显示名称"
+                 autocomplete="name">
+          <mat-icon matSuffix>badge</mat-icon>
+          <mat-error *ngIf="registerForm.get('displayName')?.hasError('required')">
+            显示名称不能为空
+          </mat-error>
+          <mat-error *ngIf="registerForm.get('displayName')?.hasError('minlength')">
+            显示名称至少2位
+          </mat-error>
+        </mat-form-field>
+
+        <!-- 密码 -->
+        <mat-form-field appearance="outline">
+          <mat-label>密码</mat-label>
+          <input matInput
+                 [type]="hidePassword ? 'password' : 'text'"
+                 formControlName="password"
+                 placeholder="请输入密码（至少6位，包含字母和数字）"
+                 autocomplete="new-password">
+          <button mat-icon-button matSuffix
+                  type="button"
+                  (click)="hidePassword = !hidePassword">
+            <mat-icon>{{hidePassword ? 'visibility_off' : 'visibility'}}</mat-icon>
+          </button>
+          <mat-error>{{ getPasswordErrorMessage() }}</mat-error>
+        </mat-form-field>
+
+        <!-- 确认密码 -->
+        <mat-form-field appearance="outline">
+          <mat-label>确认密码</mat-label>
+          <input matInput
+                 [type]="hideConfirmPassword ? 'password' : 'text'"
+                 formControlName="confirmPassword"
+                 placeholder="请再次输入密码"
+                 autocomplete="new-password">
+          <button mat-icon-button matSuffix
+                  type="button"
+                  (click)="hideConfirmPassword = !hideConfirmPassword">
+            <mat-icon>{{hideConfirmPassword ? 'visibility_off' : 'visibility'}}</mat-icon>
+          </button>
+          <mat-error *ngIf="registerForm.get('confirmPassword')?.hasError('required')">
+            请确认密码
+          </mat-error>
+          <mat-error *ngIf="registerForm.hasError('passwordMismatch') && registerForm.get('confirmPassword')?.touched">
+            两次输入的密码不一致
+          </mat-error>
+        </mat-form-field>
+
+        <!-- 注册按钮 -->
+        <button mat-raised-button
+                color="primary"
+                type="submit"
+                class="register-button"
+                [disabled]="registerForm.invalid || isLoading">
+          <mat-spinner *ngIf="isLoading" diameter="20"></mat-spinner>
+          <span *ngIf="!isLoading">注册</span>
+          <span *ngIf="isLoading">注册中...</span>
+        </button>
+
+        <!-- 返回登录 -->
+        <div class="login-link">
+          <span>已有账号？</span>
+          <button mat-button color="primary" type="button" (click)="goToLogin()">
+            立即登录
+          </button>
+        </div>
+      </form>
+    </mat-card-content>
+  </mat-card>
+</div>

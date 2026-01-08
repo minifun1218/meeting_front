@@ -8,10 +8,11 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatDividerModule } from '@angular/material/divider';
 import { MatSnackBar } from '@angular/material/snack-bar';
 
 import { AuthService } from '../../../core/services/auth.service';
-import { LoginRequest } from '../../../core/models/auth.models';
+import { LoginRequest, PublicKeyResponse } from '../../../core/models/auth.models';
 
 @Component({
   selector: 'app-login',
@@ -24,7 +25,8 @@ import { LoginRequest } from '../../../core/models/auth.models';
     MatButtonModule,
     MatFormFieldModule,
     MatIconModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    MatDividerModule
   ],
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.scss']
@@ -34,6 +36,7 @@ export class LoginComponent implements OnInit {
   hidePassword = true;
   isLoading = false;
   returnUrl = '/home';
+  publicKeyData: PublicKeyResponse | null = null;
 
   constructor(
     private fb: FormBuilder,
@@ -48,11 +51,27 @@ export class LoginComponent implements OnInit {
   ngOnInit(): void {
     // 获取重定向URL
     this.returnUrl = this.route.snapshot.queryParams['returnUrl'] || '/home';
-    
+
     // 如果已经登录，直接跳转
     if (this.authService.isAuthenticated()) {
       this.router.navigate([this.returnUrl]);
+      return;
     }
+
+    // 获取公钥和 UUID
+    this.authService.getPublicKey().subscribe({
+      next: (data) => {
+        this.publicKeyData = data;
+      },
+      error: (error) => {
+        this.snackBar.open('获取加密密钥失败，请刷新页面重试', '关闭', {
+          duration: 5000,
+          horizontalPosition: 'right',
+          verticalPosition: 'top',
+          panelClass: ['error-snackbar']
+        });
+      }
+    });
   }
 
   private createForm(): void {
@@ -68,10 +87,25 @@ export class LoginComponent implements OnInit {
       return;
     }
 
+    // 检查是否已获取公钥
+    if (!this.publicKeyData) {
+      this.snackBar.open('加密密钥未就绪，请稍后重试', '关闭', {
+        duration: 3000,
+        horizontalPosition: 'right',
+        verticalPosition: 'top',
+        panelClass: ['error-snackbar']
+      });
+      return;
+    }
+
     this.isLoading = true;
     const credentials: LoginRequest = this.loginForm.value;
 
-    this.authService.login(credentials).subscribe({
+    this.authService.login(
+      credentials,
+      this.publicKeyData.publicKey,
+      this.publicKeyData.uuid
+    ).subscribe({
       next: (response) => {
         this.isLoading = false;
         this.snackBar.open(`欢迎回来，${response.user.displayName}!`, '关闭', {
@@ -98,6 +132,10 @@ export class LoginComponent implements OnInit {
 
     const account = accounts[type];
     this.loginForm.patchValue(account);
+  }
+
+  goToRegister(): void {
+    this.router.navigate(['/register']);
   }
 
   private markFormGroupTouched(): void {

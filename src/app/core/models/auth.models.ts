@@ -21,10 +21,24 @@ export interface LoginRequest {
   password: string;
 }
 
+export interface RegisterRequest {
+  username: string;
+  email: string;
+  password: string;
+  displayName: string;
+  role?: UserRole;
+}
+
 export interface LoginResponse {
   token: string;
   user: User;
   expiresAt: number;
+}
+
+export interface RegisterResponse {
+  success: boolean;
+  message: string;
+  user?: User;
 }
 
 export interface AuthState {
@@ -33,4 +47,10 @@ export interface AuthState {
   isAuthenticated: boolean;
   isLoading: boolean;
   error: string | null;
+}
+
+export interface PublicKeyResponse {
+  publicKey: string;
+  uuid: string;
+  timestamp: number;
 }

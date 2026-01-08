@@ -52,8 +52,18 @@
         </button>
       </form>
 
+      <!-- 注册链接 -->
+      <div class="register-link">
+        <span>还没有账号？</span>
+        <button mat-button color="primary" type="button" (click)="goToRegister()">
+          立即注册
+        </button>
+      </div>
+
+      <mat-divider></mat-divider>
+
       <div class="demo-accounts">
-        <p class="demo-title">演示账号</p>
+        <p class="demo-title">演示账号（开发测试用）</p>
         <div class="demo-buttons">
           <button mat-stroked-button (click)="fillDemoAccount('admin')">
             管理员

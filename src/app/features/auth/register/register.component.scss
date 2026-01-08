@@ -1,4 +1,4 @@
-.login-container {
+.register-container {
   background: white;
   min-height: 100vh;
   display: flex;
@@ -7,7 +7,7 @@
   padding: 20px;
 }
 
-.login-card {
+.register-card {
   max-width: 400px;
   width: 100%;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -44,15 +44,19 @@ mat-form-field {
   width: 100%;
 }
 
-.login-button {
+.register-button {
   width: 100%;
   height: 48px;
-  margin-top: 8px;
   font-size: 16px;
   font-weight: 500;
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 }
 
-.register-link {
+.login-link {
   text-align: center;
   margin-top: 16px;
   color: #666;
@@ -62,28 +66,12 @@ mat-form-field {
   }
 }
 
-mat-divider {
-  margin: 24px 0;
-}
+@media (max-width: 600px) {
+  .register-card {
+    padding: 16px;
+  }
 
-.demo-accounts {
-  margin-top: 16px;
-}
-
-.demo-title {
-  font-size: 13px;
-  color: #666;
-  margin: 0 0 12px 0;
-  text-align: center;
-}
-
-.demo-buttons {
-  display: flex;
-  gap: 8px;
-  justify-content: center;
-}
-
-.demo-buttons button {
-  flex: 1;
-  font-size: 13px;
+  .title {
+    font-size: 24px;
+  }
 }
