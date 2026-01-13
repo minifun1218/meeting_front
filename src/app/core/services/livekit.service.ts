@@ -827,6 +827,60 @@ export class LiveKitService {
     }
 
     try {
+      // 尝试查找页面上已经渲染的视频元素
+      let videoElement: HTMLVideoElement | null = null;
+
+      // 查找所有video元素，找到本地参与者的视频
+      const videoElements = document.querySelectorAll('video');
+      for (const video of Array.from(videoElements)) {
+        // 检查视频是否正在播放且有画面
+        if (video.readyState >= 2 && video.videoWidth > 0 && video.videoHeight > 0) {
+          // 优先使用本地视频（通常包含 'local' 或在特定容器中）
+          const container = video.closest('[data-lk-local-participant]') ||
+                           video.closest('.local-participant') ||
+                           video.parentElement;
+
+          if (container) {
+            videoElement = video;
+            break;
+          }
+        }
+      }
+
+      // 如果没找到已渲染的视频，尝试创建新的并等待加载
+      if (!videoElement) {
+        videoElement = videoTrack.attach() as HTMLVideoElement;
+
+        // 等待视频元素准备就绪
+        await new Promise<void>((resolve, reject) => {
+          const timeout = setTimeout(() => {
+            reject(new Error('视频加载超时'));
+          }, 3000);
+
+          const checkReady = () => {
+            if (videoElement!.readyState >= 2 && videoElement!.videoWidth > 0) {
+              clearTimeout(timeout);
+              resolve();
+            } else {
+              requestAnimationFrame(checkReady);
+            }
+          };
+
+          videoElement!.onloadeddata = () => {
+            clearTimeout(timeout);
+            resolve();
+          };
+
+          // 立即检查是否已经准备好
+          if (videoElement!.readyState >= 2 && videoElement!.videoWidth > 0) {
+            clearTimeout(timeout);
+            resolve();
+          } else {
+            checkReady();
+          }
+        });
+      }
+
       // 创建canvas元素
       const canvas = document.createElement('canvas');
       const ctx = canvas.getContext('2d');
@@ -835,10 +889,9 @@ export class LiveKitService {
         throw new Error('无法创建canvas上下文');
       }
 
-      // 获取视频元素的尺寸
-      const videoElement = videoTrack.attach() as HTMLVideoElement;
-      canvas.width = videoElement.videoWidth || 640;
-      canvas.height = videoElement.videoHeight || 480;
+      // 设置canvas尺寸为视频实际尺寸
+      canvas.width = videoElement.videoWidth;
+      canvas.height = videoElement.videoHeight;
 
       // 绘制当前帧到canvas
       ctx.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
@@ -846,8 +899,10 @@ export class LiveKitService {
       // 转换为base64图片
       const screenshot = canvas.toDataURL('image/png');
 
-      // 清理
-      videoElement.remove();
+      // 如果是新创建的视频元素，清理它
+      if (!document.body.contains(videoElement)) {
+        videoElement.remove();
+      }
 
       return screenshot;
     } catch (error) {

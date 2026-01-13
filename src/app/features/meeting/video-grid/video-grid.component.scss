@@ -145,6 +145,11 @@
     background: #000;
   }
 
+  // 本地视频镜像显示（像照镜子一样）
+  &.local .video-element {
+    transform: scaleX(-1);
+  }
+
   // 参与者信息覆盖层
   .participant-overlay {
     position: absolute;

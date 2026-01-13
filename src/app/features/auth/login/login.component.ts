@@ -58,6 +58,9 @@ export class LoginComponent implements OnInit {
       return;
     }
 
+    // 恢复保存的表单数据
+    this.restoreFormData();
+
     // 获取公钥和 UUID
     this.authService.getPublicKey().subscribe({
       next: (data) => {
@@ -119,6 +122,22 @@ export class LoginComponent implements OnInit {
       error: (error) => {
         this.isLoading = false;
         console.error('登录失败:', error);
+
+        // 保存表单数据
+        this.saveFormData();
+
+        // 显示错误提示
+        this.snackBar.open(error.message || '登录失败，页面即将刷新', '关闭', {
+          duration: 3000,
+          horizontalPosition: 'right',
+          verticalPosition: 'top',
+          panelClass: ['error-snackbar']
+        });
+
+        // 3秒后自动刷新页面
+        setTimeout(() => {
+          window.location.reload();
+        }, 3000);
       }
     });
   }
@@ -145,5 +164,33 @@ export class LoginComponent implements OnInit {
         control.markAsTouched();
       }
     });
+  }
+
+  /**
+   * 保存表单数据到 sessionStorage
+   */
+  private saveFormData(): void {
+    const formData = {
+      username: this.loginForm.get('username')?.value || '',
+      password: this.loginForm.get('password')?.value || ''
+    };
+    sessionStorage.setItem('loginFormData', JSON.stringify(formData));
+  }
+
+  /**
+   * 从 sessionStorage 恢复表单数据
+   */
+  private restoreFormData(): void {
+    const savedData = sessionStorage.getItem('loginFormData');
+    if (savedData) {
+      try {
+        const formData = JSON.parse(savedData);
+        this.loginForm.patchValue(formData);
+        // 恢复后清除保存的数据
+        sessionStorage.removeItem('loginFormData');
+      } catch (error) {
+        console.error('恢复表单数据失败:', error);
+      }
+    }
   }
 }

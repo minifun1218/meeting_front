@@ -4,7 +4,7 @@ export const environment = {
   meetingServiceUrl: '/api/meetings',
   chatServiceUrl: '/api/chat',
   recordServiceUrl: '/api/recordings',
-  livekitServerUrl: 'ws://10.0.81.216:7880', // 本地LiveKit服务器
+  livekitServerUrl: 'ws://192.168.1.3:7880', // 本地LiveKit服务器
   socketUrl: '/api',
   features: {
     recording: true,

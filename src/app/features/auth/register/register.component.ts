@@ -51,6 +51,9 @@ export class RegisterComponent implements OnInit {
       return;
     }
 
+    // 恢复保存的表单数据
+    this.restoreFormData();
+
     // 获取公钥和 UUID
     this.authService.getPublicKey().subscribe({
       next: (data) => {
@@ -161,12 +164,22 @@ export class RegisterComponent implements OnInit {
       },
       error: (error) => {
         this.isLoading = false;
-        this.snackBar.open(error.message || '注册失败，请稍后重试', '关闭', {
-          duration: 5000,
+
+        // 保存表单数据（不保存密码）
+        this.saveFormData();
+
+        // 显示错误提示
+        this.snackBar.open(error.message || '注册失败，页面即将刷新', '关闭', {
+          duration: 3000,
           horizontalPosition: 'right',
           verticalPosition: 'top',
           panelClass: ['error-snackbar']
         });
+
+        // 3秒后自动刷新页面
+        setTimeout(() => {
+          window.location.reload();
+        }, 3000);
       }
     });
   }
@@ -196,5 +209,35 @@ export class RegisterComponent implements OnInit {
       return '密码必须包含字母和数字';
     }
     return '';
+  }
+
+  /**
+   * 保存表单数据到 sessionStorage（不保存密码）
+   */
+  private saveFormData(): void {
+    const formData = {
+      username: this.registerForm.get('username')?.value || '',
+      email: this.registerForm.get('email')?.value || '',
+      displayName: this.registerForm.get('displayName')?.value || '',
+      role: this.registerForm.get('role')?.value || 'PARTICIPANT'
+    };
+    sessionStorage.setItem('registerFormData', JSON.stringify(formData));
+  }
+
+  /**
+   * 从 sessionStorage 恢复表单数据
+   */
+  private restoreFormData(): void {
+    const savedData = sessionStorage.getItem('registerFormData');
+    if (savedData) {
+      try {
+        const formData = JSON.parse(savedData);
+        this.registerForm.patchValue(formData);
+        // 恢复后清除保存的数据
+        sessionStorage.removeItem('registerFormData');
+      } catch (error) {
+        console.error('恢复表单数据失败:', error);
+      }
+    }
   }
 }

@@ -162,7 +162,8 @@ The application connects to multiple microservices:
 - **Meeting Service**: `/api/meetings` (port 8082 in production)
 - **Chat Service**: `/api/chat` (port 8081 in production)
 - **Recording Service**: `/api/recordings` (port 8083 in production)
-- **LiveKit Server**: WebSocket connection (configured in environments, default: `ws://10.0.81.216:7880`)
+- **LiveKit Server**: WebSocket connection (configured in environments, default: `ws://192.168.1.3:7880`)
+- **Socket.IO**: Real-time events via `/api` (proxied in development)
 
 Environment configuration is in `src/environments/environment.ts` (dev) and `environment.prod.ts` (prod).
 
@@ -224,6 +225,7 @@ When adding new code, prefer the shorter method names (`connect`, `disconnect`, 
 ### Proxy Configuration
 In development, the Angular dev server proxies API requests to avoid CORS issues. The proxy is configured in `proxy.conf.json`:
 - All `/api/*` requests are proxied to `http://localhost:8080`
+- Pattern match uses `/api/*` (trailing wildcard)
 - Enabled automatically in development configuration via `angular.json`
 - Logs proxy activity at "debug" level for troubleshooting
 
@@ -235,6 +237,13 @@ The app uses both Angular Material and Bootstrap 5:
 
 ### Browser Compatibility
 The app requires WebRTC support. Use `LiveKitService.checkMobileBrowserCompatibility()` to verify browser capabilities before joining meetings.
+
+### Feature Flags
+The `environment.ts` file contains a `features` object for toggling functionality:
+- `recording`: Enable/disable recording features
+- `screenShare`: Enable/disable screen sharing
+- `chat`: Enable/disable chat functionality
+- `maxParticipants`: Maximum allowed participants (default: 50)
 
 ## Common Tasks
 
@@ -263,7 +272,7 @@ Example routes from `app.routes.ts`:
 Utility functions should be placed in `src/app/core/utils/` (e.g., `crypto.util.ts` for encryption/decryption utilities using `crypto-js` and `jsencrypt`).
 
 ### Modifying API Endpoints
-Update the service URLs in `src/environments/environment.ts` and `environment.prod.ts`.
+Update the service URLs in `src/environments/environment.ts` (dev) and `environment.prod.ts` (production). Note that in development, URLs use relative paths like `/api/meetings` which are proxied to `http://localhost:8080`.
 
 ### Debugging LiveKit Issues
 Use the diagnostic methods in LiveKitService:
